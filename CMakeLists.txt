@@ -15,3 +15,7 @@ FetchContent_MakeAvailable(SFML)
 add_executable(main src/main.cpp)
 target_compile_features(main PRIVATE cxx_std_17)
 target_link_libraries(main PRIVATE SFML::Graphics)
+
+set(RESOURCE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/img")
+set(RESOURCE_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/img")
+file(COPY "${RESOURCE_SOURCE_DIR}/" DESTINATION "${RESOURCE_DEST_DIR}")
