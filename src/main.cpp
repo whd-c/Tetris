@@ -29,6 +29,7 @@ struct Tetromino
 
 std::optional<sf::Color> enumToColor(Block choice);
 void initializeTetrominoes();
+Tetromino rotateTetromino(const Tetromino &currentTetromino, int iterations = 1);
 void printTetromino(sf::RenderWindow &window);
 void printGrid(sf::RenderWindow &window);
 
@@ -56,6 +57,8 @@ int main()
     auto window = sf::RenderWindow(sf::VideoMode({1280u, 720u}), "Tetris", sf::State::Windowed);
     window.setFramerateLimit(60);
 
+    sf::Clock clock;
+
     for (int i = 0; i < GRID_HEIGHT; i++)
     {
         for (int j = 0; j < GRID_WIDTH; j++)
@@ -68,6 +71,7 @@ int main()
 
     while (window.isOpen())
     {
+        sf::Time elapsed1 = clock.getElapsedTime();
         while (const std::optional event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
@@ -83,6 +87,15 @@ int main()
 
         window.clear();
         printGrid(window);
+        if (elapsed1.asSeconds() > 1)
+        {
+            for (auto &tetromino : tetrominoes)
+            {
+                tetromino = rotateTetromino(tetromino);
+            }
+            clock.restart();
+        }
+
         printTetromino(window);
         window.display();
     }
@@ -134,34 +147,20 @@ void initializeTetrominoes()
             break;
         case 'I':
             tetromino.height = 4;
-            tetromino.width = 1;
+            tetromino.width = 4;
             tetromino.piece.resize(tetromino.height);
             for (int i = 0; i < tetromino.height; i++)
             {
                 tetromino.piece[i].resize(tetromino.width, EMPTY);
             }
             tetromino.color = CYAN;
-            tetromino.piece[0][0] = tetromino.color;
-            tetromino.piece[1][0] = tetromino.color;
-            tetromino.piece[2][0] = tetromino.color;
-            tetromino.piece[3][0] = tetromino.color;
+            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[1][1] = tetromino.color;
+            tetromino.piece[2][1] = tetromino.color;
+            tetromino.piece[3][1] = tetromino.color;
             break;
         case 'S':
-            tetromino.height = 2;
-            tetromino.width = 3;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = RED;
-            tetromino.piece[0][1] = tetromino.color;
-            tetromino.piece[0][2] = tetromino.color;
-            tetromino.piece[1][0] = tetromino.color;
-            tetromino.piece[1][1] = tetromino.color;
-            break;
-        case 'Z':
-            tetromino.height = 2;
+            tetromino.height = 3;
             tetromino.width = 3;
             tetromino.piece.resize(tetromino.height);
             for (int i = 0; i < tetromino.height; i++)
@@ -170,13 +169,27 @@ void initializeTetrominoes()
             }
             tetromino.color = GREEN;
             tetromino.piece[0][0] = tetromino.color;
-            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
-            tetromino.piece[1][2] = tetromino.color;
+            tetromino.piece[2][1] = tetromino.color;
+            break;
+        case 'Z':
+            tetromino.height = 3;
+            tetromino.width = 3;
+            tetromino.piece.resize(tetromino.height);
+            for (int i = 0; i < tetromino.height; i++)
+            {
+                tetromino.piece[i].resize(tetromino.width, EMPTY);
+            }
+            tetromino.color = RED;
+            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[1][0] = tetromino.color;
+            tetromino.piece[1][1] = tetromino.color;
+            tetromino.piece[2][0] = tetromino.color;
             break;
         case 'L':
             tetromino.height = 3;
-            tetromino.width = 2;
+            tetromino.width = 3;
             tetromino.piece.resize(tetromino.height);
             for (int i = 0; i < tetromino.height; i++)
             {
@@ -184,13 +197,13 @@ void initializeTetrominoes()
             }
             tetromino.color = ORANGE;
             tetromino.piece[0][0] = tetromino.color;
-            tetromino.piece[1][0] = tetromino.color;
-            tetromino.piece[2][0] = tetromino.color;
+            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[1][1] = tetromino.color;
             tetromino.piece[2][1] = tetromino.color;
             break;
         case 'J':
             tetromino.height = 3;
-            tetromino.width = 2;
+            tetromino.width = 3;
             tetromino.piece.resize(tetromino.height);
             for (int i = 0; i < tetromino.height; i++)
             {
@@ -203,7 +216,7 @@ void initializeTetrominoes()
             tetromino.piece[2][1] = tetromino.color;
             break;
         case 'T':
-            tetromino.height = 2;
+            tetromino.height = 3;
             tetromino.width = 3;
             tetromino.piece.resize(tetromino.height);
             for (int i = 0; i < tetromino.height; i++)
@@ -211,13 +224,37 @@ void initializeTetrominoes()
                 tetromino.piece[i].resize(tetromino.width, EMPTY);
             }
             tetromino.color = PURPLE;
-            tetromino.piece[0][0] = tetromino.color;
             tetromino.piece[0][1] = tetromino.color;
-            tetromino.piece[0][2] = tetromino.color;
+            tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
+            tetromino.piece[2][1] = tetromino.color;
             break;
         }
     }
+}
+
+Tetromino rotateTetromino(const Tetromino &currentTetromino, int iterations)
+{
+    Tetromino rotatedTetromino = currentTetromino;
+
+    iterations = ((iterations % 4) + 4) % 4;
+
+    for (int it = 0; it < iterations; it++)
+    {
+        Tetromino temp = rotatedTetromino;
+        rotatedTetromino.height = temp.width;
+        rotatedTetromino.width = temp.height;
+
+        for (size_t i = 0; i < temp.height; i++)
+        {
+            for (size_t j = 0; j < temp.width; j++)
+            {
+                rotatedTetromino.piece[rotatedTetromino.height - 1 - j][i] = temp.piece[i][j];
+            }
+        }
+    }
+
+    return rotatedTetromino;
 }
 
 void printTetromino(sf::RenderWindow &window)
