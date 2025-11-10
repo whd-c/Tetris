@@ -21,6 +21,9 @@ struct Tetromino
     Block color;
     char id;
 
+    int gridX = 0;
+    int gridY = 0;
+
     std::vector<std::vector<Block>> piece;
 
     Tetromino(char _id)
@@ -29,9 +32,12 @@ struct Tetromino
 
 std::optional<sf::Color> enumToColor(Block choice);
 void initializeTetrominoes();
-Tetromino rotateTetromino(const Tetromino &currentTetromino, int iterations = 1);
-void printTetromino(sf::RenderWindow &window);
-void printGrid(sf::RenderWindow &window);
+Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations = 1);
+Tetromino newTetromino(const Tetromino &tetromino);
+bool isValidPosition(const Tetromino &tetromino);
+void handleCollision(const Tetromino &tetromino);
+void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
+void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);
 
 std::vector<Tetromino> tetrominoes = {
     {'O'},
@@ -50,10 +56,11 @@ constexpr float BLOCK_SIZE = 25.0f;
 constexpr float SPACING = 0.0f;
 constexpr float CELL_SIZE = BLOCK_SIZE + SPACING;
 
-Block screenState[GRID_HEIGHT][GRID_WIDTH];
+Block screenState[GRID_HEIGHT * 2][GRID_WIDTH];
 
 int main()
 {
+    srand(time(NULL));
     auto window = sf::RenderWindow(sf::VideoMode({1280u, 720u}), "Tetris", sf::State::Windowed);
     window.setFramerateLimit(60);
 
@@ -68,10 +75,25 @@ int main()
     }
 
     initializeTetrominoes();
-
+    Tetromino currentTetromino = newTetromino(tetrominoes[rand() % 7]);
     while (window.isOpen())
     {
-        sf::Time elapsed1 = clock.getElapsedTime();
+        sf::Time elapsed = clock.getElapsedTime();
+        if (elapsed.asSeconds() > 0.4)
+        {
+            Tetromino next = currentTetromino;
+            next.gridY += 1;
+            if (isValidPosition(next))
+            {
+                currentTetromino.gridY = next.gridY;
+            }
+            else
+            {
+                handleCollision(currentTetromino);
+                currentTetromino = newTetromino(tetrominoes[rand() % 7]);
+            }
+            clock.restart();
+        }
         while (const std::optional event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
@@ -82,21 +104,55 @@ int main()
             {
                 if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
                     window.close();
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Up)
+                {
+                    Tetromino rotated = rotatedTetromino(currentTetromino);
+                    if (isValidPosition(rotated))
+                    {
+                        currentTetromino = rotated;
+                    }
+                }
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Right)
+                {
+                    Tetromino next = currentTetromino;
+                    next.gridX += 1;
+                    if (isValidPosition(next))
+                    {
+                        currentTetromino.gridX = next.gridX;
+                    }
+                }
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Down)
+                {
+                    Tetromino next = currentTetromino;
+                    next.gridY += 1;
+                    if (isValidPosition(next))
+                    {
+                        currentTetromino.gridY = next.gridY;
+                    }
+                    else
+                    {
+                        handleCollision(currentTetromino);
+                        currentTetromino = newTetromino(tetrominoes[rand() % 7]);
+                    }
+                }
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Left)
+                {
+                    Tetromino next = currentTetromino;
+                    next.gridX -= 1;
+                    if (isValidPosition(next))
+                    {
+                        currentTetromino.gridX = next.gridX;
+                    }
+                }
             }
         }
+
+        float gridStartX, gridStartY;
 
         window.clear();
-        printGrid(window);
-        if (elapsed1.asSeconds() > 1)
-        {
-            for (auto &tetromino : tetrominoes)
-            {
-                tetromino = rotateTetromino(tetromino);
-            }
-            clock.restart();
-        }
-
-        printTetromino(window);
+        printGrid(window, gridStartX, gridStartY);
+        printTetromino(window, currentTetromino, gridStartX, gridStartY);
+        std::cout << currentTetromino.gridX << " " << currentTetromino.gridY << "\n";
         window.display();
     }
 }
@@ -233,7 +289,7 @@ void initializeTetrominoes()
     }
 }
 
-Tetromino rotateTetromino(const Tetromino &currentTetromino, int iterations)
+Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations)
 {
     Tetromino rotatedTetromino = currentTetromino;
 
@@ -257,40 +313,85 @@ Tetromino rotateTetromino(const Tetromino &currentTetromino, int iterations)
     return rotatedTetromino;
 }
 
-void printTetromino(sf::RenderWindow &window)
+Tetromino newTetromino(const Tetromino &tetromino)
 {
-    auto rectangle = sf::RectangleShape({BLOCK_SIZE, BLOCK_SIZE});
-    float startX = 50.0f;
-    float startY = 50.0f;
-    float spacing = BLOCK_SIZE;
+    Tetromino temp = tetromino;
+    temp.gridX = (GRID_WIDTH - temp.width) / 2 + ((tetromino.id != 'O') ? 1 : 0);
+    temp.gridY = 0;
+    return temp;
+}
 
-    for (Tetromino &tetromino : tetrominoes)
+bool isValidPosition(const Tetromino &tetromino)
+{
+    for (int i = 0; i < tetromino.height; i++)
     {
-        for (int i = 0; i < tetromino.height; i++)
+        for (int j = 0; j < tetromino.width; j++)
         {
-            for (int j = 0; j < tetromino.width; j++)
+            if (tetromino.piece[i][j] != EMPTY)
             {
+                int gridX = tetromino.gridX + j;
+                int gridY = tetromino.gridY + i;
 
-                float posX = startX + j * CELL_SIZE;
-                float posY = startY + i * CELL_SIZE;
+                if (gridX < 0 || gridX >= GRID_WIDTH)
+                {
+                    return false;
+                }
 
-                rectangle.setPosition({posX, posY});
-                rectangle.setFillColor(*enumToColor(tetromino.piece[i][j]));
-                window.draw(rectangle);
+                if (gridY >= GRID_HEIGHT || screenState[gridY][gridX] != EMPTY)
+                {
+                    return false;
+                }
             }
         }
+    }
+    return true;
+}
 
-        startX += tetromino.width * CELL_SIZE + spacing;
+void handleCollision(const Tetromino &tetromino)
+{
+    for (int i = 0; i < tetromino.height; i++)
+    {
+        for (int j = 0; j < tetromino.width; j++)
+        {
+            if (tetromino.piece[i][j] != EMPTY)
+            {
+                int gridX = tetromino.gridX + j;
+                int gridY = tetromino.gridY + i;
+
+                screenState[gridY][gridX] = tetromino.piece[i][j];
+            }
+        }
     }
 }
 
-void printGrid(sf::RenderWindow &window)
+void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY)
+{
+    auto rectangle = sf::RectangleShape({BLOCK_SIZE, BLOCK_SIZE});
+    for (int i = 0; i < tetromino.height; i++)
+    {
+        for (int j = 0; j < tetromino.width; j++)
+        {
+            if (tetromino.piece[i][j] == EMPTY)
+                continue;
+            float posX = startX + (tetromino.gridX + j) * CELL_SIZE;
+            float posY = startY + (tetromino.gridY + i) * CELL_SIZE;
+            rectangle.setPosition({posX, posY});
+            rectangle.setFillColor(*enumToColor(tetromino.piece[i][j]));
+            window.draw(rectangle);
+        }
+    }
+}
+
+void printGrid(sf::RenderWindow &window, float &startX, float &startY)
 {
     constexpr float TOTAL_GRID_WIDTH = GRID_WIDTH * CELL_SIZE;
     constexpr float TOTAL_GRID_HEIGHT = GRID_HEIGHT * CELL_SIZE;
 
     static const float START_X = (window.getSize().x - TOTAL_GRID_WIDTH) / 2.0f;
     static const float START_Y = (window.getSize().y - TOTAL_GRID_HEIGHT) / 2.0f;
+
+    startX = START_X;
+    startY = START_Y;
 
     auto rectangle = sf::RectangleShape({BLOCK_SIZE, BLOCK_SIZE});
     for (int i = 0; i < GRID_HEIGHT; i++)
