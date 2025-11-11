@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <random>
 
 #include <SFML/Graphics.hpp>
 
@@ -45,11 +47,12 @@ struct Tetromino
 };
 sf::Color enumToColor(Block choice);
 void initializeTetrominoes();
+std::vector<Tetromino> generateBag();
 Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations = 1);
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino);
 void handleCollision(const Tetromino &tetromino);
-void handleWreck(Tetromino &tetromino, int &score, sf::Text &textScore);
+void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, sf::Text &textScore);
 void clearRows(int &score, sf::Text &textScore);
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
 void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);
@@ -81,7 +84,6 @@ sf::Font roboto;
 
 int main()
 {
-    srand(time(NULL));
     auto window = sf::RenderWindow(sf::VideoMode({RWIDTH, RHEIGHT}), "Tetris", sf::State::Fullscreen);
     int score = 0;
     window.setFramerateLimit(144);
@@ -89,7 +91,7 @@ int main()
     sf::Image icon;
     if (!icon.loadFromFile("favicon/favicon.png"))
     {
-        std::cout << "Failed to load icon\n";
+        std::cerr << "Failed to load icon\n";
         return 1;
     }
 
@@ -98,21 +100,22 @@ int main()
 
     if (!roboto.openFromFile("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf"))
     {
-        std::cout << "Failed to load font\n";
+        std::cerr << "Failed to load font\n";
         return 1;
     }
+
     sf::Text textScore(roboto);
+
     textScore.setString("Score: " + std::to_string(score));
     textScore.setCharacterSize(96);
 
     initializeTetrominoes();
-    int randTetromino = rand() % 7;
+    auto bag = generateBag();
     std::optional<Tetromino> tempTetromino;
-
-    if (newTetromino(tetrominoes[randTetromino]))
-        tempTetromino = *newTetromino(tetrominoes[rand() % 7]);
+    if (newTetromino(*bag.begin()))
+        tempTetromino = *newTetromino(*bag.begin());
+    bag.erase(bag.begin());
     Tetromino currentTetromino = *tempTetromino;
-
     while (window.isOpen())
     {
         sf::Time elapsed = clock.getElapsedTime();
@@ -127,7 +130,7 @@ int main()
             else
             {
                 handleCollision(currentTetromino);
-                handleWreck(currentTetromino, score, textScore);
+                handleWreck(currentTetromino, bag, score, textScore);
             }
             clock.restart();
         }
@@ -169,7 +172,7 @@ int main()
                     else
                     {
                         handleCollision(currentTetromino);
-                        handleWreck(currentTetromino, score, textScore);
+                        handleWreck(currentTetromino, bag, score, textScore);
                     }
                 }
                 else if (keyPressed->scancode == sf::Keyboard::Scancode::Left || keyPressed->scancode == sf::Keyboard::Scancode::A)
@@ -189,7 +192,7 @@ int main()
                     }
                     currentTetromino.gridY--;
                     handleCollision(currentTetromino);
-                    handleWreck(currentTetromino, score, textScore);
+                    handleWreck(currentTetromino, bag, score, textScore);
                 }
             }
         }
@@ -204,6 +207,11 @@ int main()
         ghostTetromino.gridY--;
 
         window.clear();
+
+        float textScoreX = gridStartX + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 2;
+        float textScoreY = gridStartY;
+        textScore.setPosition({textScoreX, textScoreY});
+
         printGrid(window, gridStartX, gridStartY);
         clearRows(score, textScore);
         printTetromino(window, currentTetromino, gridStartX, gridStartY);
@@ -347,6 +355,16 @@ void initializeTetrominoes()
     }
 }
 
+std::vector<Tetromino> generateBag()
+{
+    std::vector<Tetromino> bag = tetrominoes;
+
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::shuffle(bag.begin(), bag.end(), mt);
+    return bag;
+}
+
 Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations)
 {
     Tetromino rotatedTetromino = currentTetromino;
@@ -436,10 +454,9 @@ void handleCollision(const Tetromino &tetromino)
     }
 }
 
-void handleWreck(Tetromino &tetromino, int &score, sf::Text &textScore)
+void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, sf::Text &textScore)
 {
-    int randTetromino = rand() % 7;
-    std::optional<Tetromino> nextTetromino = newTetromino(tetrominoes[randTetromino]);
+    std::optional<Tetromino> nextTetromino = newTetromino(bag[0]);
     if (!nextTetromino)
     {
         for (int i = 0; i < GRID_HEIGHT; i++)
@@ -449,15 +466,18 @@ void handleWreck(Tetromino &tetromino, int &score, sf::Text &textScore)
                 screenState[i][j] = EMPTY;
             }
         }
-        randTetromino = rand() % 7;
-        nextTetromino = newTetromino(tetrominoes[randTetromino]);
+        bag = generateBag();
+        nextTetromino = newTetromino(bag[0]);
         score = 0;
         textScore.setString("Score: " + std::to_string(score));
     }
     if (nextTetromino)
     {
         tetromino = *nextTetromino;
+        bag.erase(bag.begin());
     }
+    if (bag.size() <= 0)
+        bag = generateBag();
 }
 
 void clearRows(int &score, sf::Text &textScore)
