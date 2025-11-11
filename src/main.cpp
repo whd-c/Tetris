@@ -38,8 +38,8 @@ std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino);
 void handleCollision(const Tetromino &tetromino);
 void setTetrominoColor(Tetromino &tetromino, Block color);
-void handleWreck(Tetromino &tetromino, int &score);
-void clearRows(int &score);
+void handleWreck(Tetromino &tetromino, int &score, sf::Text &textScore);
+void clearRows(int &score, sf::Text &textScore);
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
 void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);
 
@@ -63,11 +63,8 @@ constexpr float BLOCK_SIZE = 40.0f;
 constexpr float SPACING = 0.0f;
 constexpr float CELL_SIZE = BLOCK_SIZE + SPACING;
 
-Block screenState[GRID_HEIGHT][GRID_WIDTH];
-
-const sf::Font roboto("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf");
-
-sf::Text textScore(roboto);
+std::array<std::array<Block, GRID_WIDTH>, GRID_HEIGHT> screenState = {};
+sf::Font roboto;
 
 int main()
 {
@@ -78,19 +75,22 @@ int main()
 
     sf::Clock clock;
 
+    if (!roboto.openFromFile("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf"))
+    {
+        std::cout << "Failed to load font\n";
+        return 1;
+    }
+    sf::Text textScore(roboto);
     textScore.setString("Score: " + std::to_string(score));
     textScore.setCharacterSize(96);
 
-    for (int i = 0; i < GRID_HEIGHT; i++)
-    {
-        for (int j = 0; j < GRID_WIDTH; j++)
-        {
-            screenState[i][j] = EMPTY;
-        }
-    }
-
     initializeTetrominoes();
-    Tetromino currentTetromino = *newTetromino(tetrominoes[rand() % 7]);
+    int randTetromino = rand() % 7;
+    std::optional<Tetromino> tempTetromino;
+
+    if (newTetromino(tetrominoes[randTetromino]))
+        tempTetromino = *newTetromino(tetrominoes[rand() % 7]);
+    Tetromino currentTetromino = *tempTetromino;
 
     while (window.isOpen())
     {
@@ -106,7 +106,7 @@ int main()
             else
             {
                 handleCollision(currentTetromino);
-                handleWreck(currentTetromino, score);
+                handleWreck(currentTetromino, score, textScore);
             }
             clock.restart();
         }
@@ -148,7 +148,7 @@ int main()
                     else
                     {
                         handleCollision(currentTetromino);
-                        handleWreck(currentTetromino, score);
+                        handleWreck(currentTetromino, score, textScore);
                     }
                 }
                 else if (keyPressed->scancode == sf::Keyboard::Scancode::Left || keyPressed->scancode == sf::Keyboard::Scancode::A)
@@ -168,7 +168,7 @@ int main()
                     }
                     currentTetromino.gridY--;
                     handleCollision(currentTetromino);
-                    handleWreck(currentTetromino, score);
+                    handleWreck(currentTetromino, score, textScore);
                 }
             }
         }
@@ -184,7 +184,7 @@ int main()
 
         window.clear();
         printGrid(window, gridStartX, gridStartY);
-        clearRows(score);
+        clearRows(score, textScore);
         printTetromino(window, currentTetromino, gridStartX, gridStartY);
         printTetromino(window, ghostTetromino, gridStartX, gridStartY);
         window.draw(textScore);
@@ -247,10 +247,10 @@ void initializeTetrominoes()
                 tetromino.piece[i].resize(tetromino.width, EMPTY);
             }
             tetromino.color = CYAN;
-            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
-            tetromino.piece[2][1] = tetromino.color;
-            tetromino.piece[3][1] = tetromino.color;
+            tetromino.piece[1][2] = tetromino.color;
+            tetromino.piece[1][3] = tetromino.color;
             break;
         case 'S':
             tetromino.height = 3;
@@ -261,10 +261,10 @@ void initializeTetrominoes()
                 tetromino.piece[i].resize(tetromino.width, EMPTY);
             }
             tetromino.color = GREEN;
-            tetromino.piece[0][0] = tetromino.color;
+            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[0][2] = tetromino.color;
             tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
-            tetromino.piece[2][1] = tetromino.color;
             break;
         case 'Z':
             tetromino.height = 3;
@@ -275,10 +275,10 @@ void initializeTetrominoes()
                 tetromino.piece[i].resize(tetromino.width, EMPTY);
             }
             tetromino.color = RED;
+            tetromino.piece[0][0] = tetromino.color;
             tetromino.piece[0][1] = tetromino.color;
-            tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
-            tetromino.piece[2][0] = tetromino.color;
+            tetromino.piece[1][2] = tetromino.color;
             break;
         case 'L':
             tetromino.height = 3;
@@ -289,10 +289,10 @@ void initializeTetrominoes()
                 tetromino.piece[i].resize(tetromino.width, EMPTY);
             }
             tetromino.color = ORANGE;
-            tetromino.piece[0][0] = tetromino.color;
-            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[0][2] = tetromino.color;
+            tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
-            tetromino.piece[2][1] = tetromino.color;
+            tetromino.piece[1][2] = tetromino.color;
             break;
         case 'J':
             tetromino.height = 3;
@@ -303,10 +303,10 @@ void initializeTetrominoes()
                 tetromino.piece[i].resize(tetromino.width, EMPTY);
             }
             tetromino.color = BLUE;
-            tetromino.piece[0][1] = tetromino.color;
+            tetromino.piece[0][0] = tetromino.color;
+            tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
-            tetromino.piece[2][0] = tetromino.color;
-            tetromino.piece[2][1] = tetromino.color;
+            tetromino.piece[1][2] = tetromino.color;
             break;
         case 'T':
             tetromino.height = 3;
@@ -320,7 +320,7 @@ void initializeTetrominoes()
             tetromino.piece[0][1] = tetromino.color;
             tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
-            tetromino.piece[2][1] = tetromino.color;
+            tetromino.piece[1][2] = tetromino.color;
             break;
         }
     }
@@ -353,9 +353,12 @@ Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations)
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
 {
     Tetromino temp = tetromino;
-    temp.gridX = (GRID_WIDTH - temp.width) / 2 + ((tetromino.id != 'O') ? 1 : 0);
+    temp.gridX = (GRID_WIDTH - temp.width) / 2;
+
     temp.gridY = 0;
-    for (int i = 0; i < temp.height; i++)
+    if (tetromino.id == 'I')
+        temp.gridY--;
+    for (int i = 1; i < temp.height; i++)
     {
         for (int j = 0; j < temp.width; j++)
         {
@@ -416,7 +419,7 @@ void setTetrominoColor(Tetromino &tetromino, Block color)
 {
     for (int i = 0; i < tetromino.height; i++)
     {
-        for (int j = 0; j < tetromino.height; j++)
+        for (int j = 0; j < tetromino.width; j++)
         {
             if (tetromino.piece[i][j] != EMPTY)
                 tetromino.piece[i][j] = color;
@@ -424,7 +427,7 @@ void setTetrominoColor(Tetromino &tetromino, Block color)
     }
 }
 
-void handleWreck(Tetromino &tetromino, int &score)
+void handleWreck(Tetromino &tetromino, int &score, sf::Text &textScore)
 {
     int randTetromino = rand() % 7;
     std::optional<Tetromino> nextTetromino = newTetromino(tetrominoes[randTetromino]);
@@ -442,10 +445,13 @@ void handleWreck(Tetromino &tetromino, int &score)
         score = 0;
         textScore.setString("Score: " + std::to_string(score));
     }
-    tetromino = *nextTetromino;
+    if (nextTetromino)
+    {
+        tetromino = *nextTetromino;
+    }
 }
 
-void clearRows(int &score)
+void clearRows(int &score, sf::Text &textScore)
 {
     int writeRow = GRID_HEIGHT - 1;
     for (int i = GRID_HEIGHT - 1; i >= 0; i--)
