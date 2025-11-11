@@ -33,9 +33,10 @@ struct Tetromino
 std::optional<sf::Color> enumToColor(Block choice);
 void initializeTetrominoes();
 Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations = 1);
-Tetromino newTetromino(const Tetromino &tetromino);
+std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino);
 void handleCollision(const Tetromino &tetromino);
+void clearRows();
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
 void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);
 
@@ -75,7 +76,8 @@ int main()
     }
 
     initializeTetrominoes();
-    Tetromino currentTetromino = newTetromino(tetrominoes[rand() % 7]);
+    Tetromino currentTetromino = *newTetromino(tetrominoes[rand() % 7]);
+
     while (window.isOpen())
     {
         sf::Time elapsed = clock.getElapsedTime();
@@ -90,7 +92,22 @@ int main()
             else
             {
                 handleCollision(currentTetromino);
-                currentTetromino = newTetromino(tetrominoes[rand() % 7]);
+                int randTetromino = rand() % 7;
+                std::optional<Tetromino> nextTetromino = newTetromino(tetrominoes[randTetromino]);
+                if (!nextTetromino)
+                {
+                    for (int i = 0; i < GRID_HEIGHT; i++)
+                    {
+                        for (int j = 0; j < GRID_WIDTH; j++)
+                        {
+                            screenState[i][j] = EMPTY;
+                        }
+                    }
+                    randTetromino = rand() % 7;
+                    nextTetromino = newTetromino(tetrominoes[randTetromino]);
+                }
+
+                currentTetromino = *nextTetromino;
             }
             clock.restart();
         }
@@ -132,7 +149,22 @@ int main()
                     else
                     {
                         handleCollision(currentTetromino);
-                        currentTetromino = newTetromino(tetrominoes[rand() % 7]);
+                        int randTetromino = rand() % 7;
+                        std::optional<Tetromino> nextTetromino = newTetromino(tetrominoes[randTetromino]);
+                        if (!nextTetromino)
+                        {
+                            for (int i = 0; i < GRID_HEIGHT; i++)
+                            {
+                                for (int j = 0; j < GRID_WIDTH; j++)
+                                {
+                                    screenState[i][j] = EMPTY;
+                                }
+                            }
+                            randTetromino = rand() % 7;
+                            nextTetromino = newTetromino(tetrominoes[randTetromino]);
+                        }
+
+                        currentTetromino = *nextTetromino;
                     }
                 }
                 else if (keyPressed->scancode == sf::Keyboard::Scancode::Left)
@@ -151,6 +183,7 @@ int main()
 
         window.clear();
         printGrid(window, gridStartX, gridStartY);
+        clearRows();
         printTetromino(window, currentTetromino, gridStartX, gridStartY);
         std::cout << currentTetromino.gridX << " " << currentTetromino.gridY << "\n";
         window.display();
@@ -178,7 +211,7 @@ std::optional<sf::Color> enumToColor(Block choice)
     case RED:
         return sf::Color::Red;
     default:
-        return {};
+        return std::nullopt;
     }
 }
 void initializeTetrominoes()
@@ -301,9 +334,9 @@ Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations)
         rotatedTetromino.height = temp.width;
         rotatedTetromino.width = temp.height;
 
-        for (size_t i = 0; i < temp.height; i++)
+        for (int i = 0; i < temp.height; i++)
         {
-            for (size_t j = 0; j < temp.width; j++)
+            for (int j = 0; j < temp.width; j++)
             {
                 rotatedTetromino.piece[rotatedTetromino.height - 1 - j][i] = temp.piece[i][j];
             }
@@ -313,11 +346,22 @@ Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations)
     return rotatedTetromino;
 }
 
-Tetromino newTetromino(const Tetromino &tetromino)
+std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
 {
     Tetromino temp = tetromino;
     temp.gridX = (GRID_WIDTH - temp.width) / 2 + ((tetromino.id != 'O') ? 1 : 0);
     temp.gridY = 0;
+    for (int i = 0; i < temp.height; i++)
+    {
+        for (int j = 0; j < temp.width; j++)
+        {
+            if (screenState[temp.gridY + i][temp.gridX + j] != EMPTY)
+            {
+                return std::nullopt;
+            }
+        }
+    }
+
     return temp;
 }
 
@@ -360,6 +404,37 @@ void handleCollision(const Tetromino &tetromino)
 
                 screenState[gridY][gridX] = tetromino.piece[i][j];
             }
+        }
+    }
+}
+
+void clearRows()
+{
+    for (int i = GRID_HEIGHT - 1; i >= 0; i--)
+    {
+        bool fullRow = true;
+        for (int j = 0; j < GRID_WIDTH; j++)
+        {
+            if (screenState[i][j] == EMPTY)
+            {
+                fullRow = false;
+                break;
+            }
+        }
+        if (fullRow)
+        {
+            for (int j = i; j > 0; j--)
+            {
+                for (int k = 0; k < GRID_WIDTH; k++)
+                {
+                    screenState[j][k] = screenState[j - 1][k];
+                }
+            }
+            for (int j = 0; j < GRID_WIDTH; j++)
+            {
+                screenState[0][j] = EMPTY;
+            }
+            i++;
         }
     }
 }
