@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+
 #include <SFML/Graphics.hpp>
 
 enum Block
@@ -29,15 +30,25 @@ struct Tetromino
 
     Tetromino(char _id)
         : id(_id) {}
-};
 
+    void setColor(Block color)
+    {
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                if (piece[i][j] != EMPTY)
+                    piece[i][j] = color;
+            }
+        }
+    }
+};
 sf::Color enumToColor(Block choice);
 void initializeTetrominoes();
 Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations = 1);
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino);
 void handleCollision(const Tetromino &tetromino);
-void setTetrominoColor(Tetromino &tetromino, Block color);
 void handleWreck(Tetromino &tetromino, int &score, sf::Text &textScore);
 void clearRows(int &score, sf::Text &textScore);
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
@@ -63,7 +74,9 @@ constexpr float BLOCK_SIZE = 40.0f;
 constexpr float SPACING = 0.0f;
 constexpr float CELL_SIZE = BLOCK_SIZE + SPACING;
 
+// init with EMPTY (0)
 std::array<std::array<Block, GRID_WIDTH>, GRID_HEIGHT> screenState = {};
+
 sf::Font roboto;
 
 int main()
@@ -73,6 +86,14 @@ int main()
     int score = 0;
     window.setFramerateLimit(144);
 
+    sf::Image icon;
+    if (!icon.loadFromFile("favicon/favicon.png"))
+    {
+        std::cout << "Failed to load icon\n";
+        return 1;
+    }
+
+    window.setIcon(icon);
     sf::Clock clock;
 
     if (!roboto.openFromFile("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf"))
@@ -175,7 +196,7 @@ int main()
 
         float gridStartX, gridStartY;
         Tetromino ghostTetromino = currentTetromino;
-        setTetrominoColor(ghostTetromino, TRANSPARENT);
+        ghostTetromino.setColor(TRANSPARENT);
         while (isValidPosition(ghostTetromino))
         {
             ghostTetromino.gridY++;
@@ -411,18 +432,6 @@ void handleCollision(const Tetromino &tetromino)
 
                 screenState[gridY][gridX] = tetromino.piece[i][j];
             }
-        }
-    }
-}
-
-void setTetrominoColor(Tetromino &tetromino, Block color)
-{
-    for (int i = 0; i < tetromino.height; i++)
-    {
-        for (int j = 0; j < tetromino.width; j++)
-        {
-            if (tetromino.piece[i][j] != EMPTY)
-                tetromino.piece[i][j] = color;
         }
     }
 }

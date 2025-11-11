@@ -12,9 +12,13 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(main src/main.cpp)
-target_compile_features(main PRIVATE cxx_std_17)
-target_link_libraries(main PRIVATE SFML::Graphics)
+add_executable(Tetris src/main.cpp favicon/resource.rc)
+target_compile_features(Tetris PRIVATE cxx_std_17)
+target_link_libraries(Tetris PRIVATE SFML::Graphics)
+
+set(RESOURCE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/favicon")
+set(RESOURCE_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/favicon")
+file(COPY "${RESOURCE_SOURCE_DIR}/" DESTINATION "${RESOURCE_DEST_DIR}")
 
 set(RESOURCE_SOURCE_DIR "${PROJECT_SOURCE_DIR}/img")
 set(RESOURCE_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/img")
