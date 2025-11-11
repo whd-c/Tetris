@@ -31,15 +31,15 @@ struct Tetromino
         : id(_id) {}
 };
 
-std::optional<sf::Color> enumToColor(Block choice);
+sf::Color enumToColor(Block choice);
 void initializeTetrominoes();
 Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations = 1);
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino);
 void handleCollision(const Tetromino &tetromino);
 void setTetrominoColor(Tetromino &tetromino, Block color);
-void handleWreck(Tetromino &tetromino);
-void clearRows();
+void handleWreck(Tetromino &tetromino, int &score);
+void clearRows(int &score);
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
 void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);
 
@@ -56,19 +56,30 @@ std::vector<Tetromino> tetrominoes = {
 constexpr int GRID_WIDTH = 10;
 constexpr int GRID_HEIGHT = 20;
 
-constexpr float BLOCK_SIZE = 25.0f;
+constexpr unsigned int RWIDTH = 1920;
+constexpr unsigned int RHEIGHT = 1080;
+
+constexpr float BLOCK_SIZE = 40.0f;
 constexpr float SPACING = 0.0f;
 constexpr float CELL_SIZE = BLOCK_SIZE + SPACING;
 
 Block screenState[GRID_HEIGHT][GRID_WIDTH];
 
+const sf::Font roboto("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf");
+
+sf::Text textScore(roboto);
+
 int main()
 {
     srand(time(NULL));
-    auto window = sf::RenderWindow(sf::VideoMode({1280u, 720u}), "Tetris", sf::State::Windowed);
-    window.setFramerateLimit(60);
+    auto window = sf::RenderWindow(sf::VideoMode({RWIDTH, RHEIGHT}), "Tetris", sf::State::Fullscreen);
+    int score = 0;
+    window.setFramerateLimit(144);
 
     sf::Clock clock;
+
+    textScore.setString("Score: " + std::to_string(score));
+    textScore.setCharacterSize(96);
 
     for (int i = 0; i < GRID_HEIGHT; i++)
     {
@@ -95,7 +106,7 @@ int main()
             else
             {
                 handleCollision(currentTetromino);
-                handleWreck(currentTetromino);
+                handleWreck(currentTetromino, score);
             }
             clock.restart();
         }
@@ -137,7 +148,7 @@ int main()
                     else
                     {
                         handleCollision(currentTetromino);
-                        handleWreck(currentTetromino);
+                        handleWreck(currentTetromino, score);
                     }
                 }
                 else if (keyPressed->scancode == sf::Keyboard::Scancode::Left || keyPressed->scancode == sf::Keyboard::Scancode::A)
@@ -157,7 +168,7 @@ int main()
                     }
                     currentTetromino.gridY--;
                     handleCollision(currentTetromino);
-                    handleWreck(currentTetromino);
+                    handleWreck(currentTetromino, score);
                 }
             }
         }
@@ -173,14 +184,15 @@ int main()
 
         window.clear();
         printGrid(window, gridStartX, gridStartY);
-        clearRows();
+        clearRows(score);
         printTetromino(window, currentTetromino, gridStartX, gridStartY);
         printTetromino(window, ghostTetromino, gridStartX, gridStartY);
+        window.draw(textScore);
         window.display();
     }
 }
 
-std::optional<sf::Color> enumToColor(Block choice)
+sf::Color enumToColor(Block choice)
 {
     switch (choice)
     {
@@ -203,7 +215,7 @@ std::optional<sf::Color> enumToColor(Block choice)
     case TRANSPARENT:
         return sf::Color(255, 255, 255, 64);
     default:
-        return std::nullopt;
+        return sf::Color::Black;
     }
 }
 void initializeTetrominoes()
@@ -412,7 +424,7 @@ void setTetrominoColor(Tetromino &tetromino, Block color)
     }
 }
 
-void handleWreck(Tetromino &tetromino)
+void handleWreck(Tetromino &tetromino, int &score)
 {
     int randTetromino = rand() % 7;
     std::optional<Tetromino> nextTetromino = newTetromino(tetrominoes[randTetromino]);
@@ -427,12 +439,13 @@ void handleWreck(Tetromino &tetromino)
         }
         randTetromino = rand() % 7;
         nextTetromino = newTetromino(tetrominoes[randTetromino]);
+        score = 0;
+        textScore.setString("Score: " + std::to_string(score));
     }
-
     tetromino = *nextTetromino;
 }
 
-void clearRows()
+void clearRows(int &score)
 {
     int writeRow = GRID_HEIGHT - 1;
     for (int i = GRID_HEIGHT - 1; i >= 0; i--)
@@ -459,6 +472,11 @@ void clearRows()
             }
             writeRow--;
         }
+        else
+        {
+            score += 100;
+            textScore.setString("Score: " + std::to_string(score));
+        }
     }
 
     for (int i = writeRow; i >= 0; i--)
@@ -482,7 +500,7 @@ void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float 
             float posX = startX + (tetromino.gridX + j) * CELL_SIZE;
             float posY = startY + (tetromino.gridY + i) * CELL_SIZE;
             rectangle.setPosition({posX, posY});
-            rectangle.setFillColor(*enumToColor(tetromino.piece[i][j]));
+            rectangle.setFillColor(enumToColor(tetromino.piece[i][j]));
             window.draw(rectangle);
         }
     }
@@ -508,11 +526,7 @@ void printGrid(sf::RenderWindow &window, float &startX, float &startY)
             const float posY = START_Y + i * CELL_SIZE;
 
             rectangle.setPosition({posX, posY});
-
-            if (auto color = enumToColor(screenState[i][j]))
-            {
-                rectangle.setFillColor(*color);
-            }
+            rectangle.setFillColor(enumToColor(screenState[i][j]));
             window.draw(rectangle);
         }
     }
