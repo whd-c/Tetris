@@ -121,7 +121,7 @@ int main()
             {
                 if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
                     window.close();
-                else if (keyPressed->scancode == sf::Keyboard::Scancode::Up)
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Up || keyPressed->scancode == sf::Keyboard::Scancode::W)
                 {
                     Tetromino rotated = rotatedTetromino(currentTetromino);
                     if (isValidPosition(rotated))
@@ -129,7 +129,7 @@ int main()
                         currentTetromino = rotated;
                     }
                 }
-                else if (keyPressed->scancode == sf::Keyboard::Scancode::Right)
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Right || keyPressed->scancode == sf::Keyboard::Scancode::D)
                 {
                     Tetromino next = currentTetromino;
                     next.gridX += 1;
@@ -138,7 +138,7 @@ int main()
                         currentTetromino.gridX = next.gridX;
                     }
                 }
-                else if (keyPressed->scancode == sf::Keyboard::Scancode::Down)
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Down || keyPressed->scancode == sf::Keyboard::Scancode::S)
                 {
                     Tetromino next = currentTetromino;
                     next.gridY += 1;
@@ -167,7 +167,7 @@ int main()
                         currentTetromino = *nextTetromino;
                     }
                 }
-                else if (keyPressed->scancode == sf::Keyboard::Scancode::Left)
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::Left || keyPressed->scancode == sf::Keyboard::Scancode::A)
                 {
                     Tetromino next = currentTetromino;
                     next.gridX -= 1;
@@ -410,6 +410,8 @@ void handleCollision(const Tetromino &tetromino)
 
 void clearRows()
 {
+    int writeRow = GRID_HEIGHT - 1;
+
     for (int i = GRID_HEIGHT - 1; i >= 0; i--)
     {
         bool fullRow = true;
@@ -421,20 +423,25 @@ void clearRows()
                 break;
             }
         }
-        if (fullRow)
+
+        if (!fullRow)
         {
-            for (int j = i; j > 0; j--)
+            if (i != writeRow)
             {
-                for (int k = 0; k < GRID_WIDTH; k++)
+                for (int j = 0; j < GRID_WIDTH; j++)
                 {
-                    screenState[j][k] = screenState[j - 1][k];
+                    screenState[writeRow][j] = screenState[i][j];
                 }
             }
-            for (int j = 0; j < GRID_WIDTH; j++)
-            {
-                screenState[0][j] = EMPTY;
-            }
-            i++;
+            writeRow--;
+        }
+    }
+
+    for (int i = writeRow; i >= 0; i--)
+    {
+        for (int j = 0; j < GRID_WIDTH; j++)
+        {
+            screenState[i][j] = EMPTY;
         }
     }
 }
