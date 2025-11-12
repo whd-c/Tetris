@@ -5,7 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 
-enum Block
+enum Color
 {
     EMPTY,
     CYAN,
@@ -15,25 +15,35 @@ enum Block
     GREEN,
     PURPLE,
     RED,
+    DARK_PURPLE,
     TRANSPARENT
 };
 
 struct Tetromino
 {
-    int height;
-    int width;
-    Block color;
+    int squareSize;
+    Color color;
     char id;
 
     int gridX = 0;
     int gridY = 0;
 
-    std::vector<std::vector<Block>> piece;
+    std::vector<std::vector<Color>> piece;
 
     Tetromino(char _id)
         : id(_id) {}
+    void setAttributes(int _squareSize, Color _color)
+    {
+        squareSize = _squareSize;
+        piece.resize(squareSize);
+        for (int i = 0; i < squareSize; i++)
+        {
+            piece[i].resize(squareSize, EMPTY);
+        }
+        color = _color;
+    }
 };
-sf::Color enumToColor(Block choice);
+sf::Color enumToColor(Color choice);
 void initializeTetrominoes();
 std::vector<Tetromino> generateBag();
 Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations = 1);
@@ -62,12 +72,13 @@ constexpr int GRID_HEIGHT = 20;
 constexpr unsigned int RWIDTH = 1920;
 constexpr unsigned int RHEIGHT = 1080;
 
-constexpr float BLOCK_SIZE = 40.0f;
+constexpr float COLOR_SIZE = 40.0f;
 constexpr float SPACING = 0.0f;
-constexpr float CELL_SIZE = BLOCK_SIZE + SPACING;
+constexpr float CELL_SIZE = COLOR_SIZE + SPACING;
+constexpr float RECTANGLE_OUTLINE_SIZE = -1.5f;
 
 // init with EMPTY (0)
-std::array<std::array<Block, GRID_WIDTH>, GRID_HEIGHT> screenState = {};
+std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState = {};
 
 sf::Font roboto;
 
@@ -203,15 +214,15 @@ int main()
 
         printGrid(window, gridStartX, gridStartY);
         clearRows(score, textScore);
-        printTetromino(window, currentTetromino, gridStartX, gridStartY);
         printTetromino(window, ghostTetromino, gridStartX, gridStartY);
+        printTetromino(window, currentTetromino, gridStartX, gridStartY);
         printNextTetromino(window, bag[0], gridStartX, gridStartY);
         window.draw(textScore);
         window.display();
     }
 }
 
-sf::Color enumToColor(Block choice)
+sf::Color enumToColor(Color choice)
 {
     switch (choice)
     {
@@ -231,6 +242,8 @@ sf::Color enumToColor(Block choice)
         return sf::Color(128, 0, 128);
     case RED:
         return sf::Color::Red;
+    case DARK_PURPLE:
+        return sf::Color(49, 49, 80);
     case TRANSPARENT:
         return sf::Color(255, 255, 255, 64);
     default:
@@ -244,98 +257,49 @@ void initializeTetrominoes()
         switch (tetromino.id)
         {
         case 'O':
-            tetromino.height = 2;
-            tetromino.width = 2;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = YELLOW;
+            tetromino.setAttributes(2, YELLOW);
             tetromino.piece[0][0] = YELLOW;
             tetromino.piece[0][1] = YELLOW;
             tetromino.piece[1][0] = YELLOW;
             tetromino.piece[1][1] = YELLOW;
             break;
         case 'I':
-            tetromino.height = 4;
-            tetromino.width = 4;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = CYAN;
+            tetromino.setAttributes(4, CYAN);
             tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
             tetromino.piece[1][2] = tetromino.color;
             tetromino.piece[1][3] = tetromino.color;
             break;
         case 'S':
-            tetromino.height = 3;
-            tetromino.width = 3;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = GREEN;
+            tetromino.setAttributes(3, GREEN);
             tetromino.piece[0][1] = tetromino.color;
             tetromino.piece[0][2] = tetromino.color;
             tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
             break;
         case 'Z':
-            tetromino.height = 3;
-            tetromino.width = 3;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = RED;
+            tetromino.setAttributes(3, RED);
             tetromino.piece[0][0] = tetromino.color;
             tetromino.piece[0][1] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
             tetromino.piece[1][2] = tetromino.color;
             break;
         case 'L':
-            tetromino.height = 3;
-            tetromino.width = 3;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = ORANGE;
+            tetromino.setAttributes(3, ORANGE);
             tetromino.piece[0][2] = tetromino.color;
             tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
             tetromino.piece[1][2] = tetromino.color;
             break;
         case 'J':
-            tetromino.height = 3;
-            tetromino.width = 3;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = BLUE;
+            tetromino.setAttributes(3, BLUE);
             tetromino.piece[0][0] = tetromino.color;
             tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
             tetromino.piece[1][2] = tetromino.color;
             break;
         case 'T':
-            tetromino.height = 3;
-            tetromino.width = 3;
-            tetromino.piece.resize(tetromino.height);
-            for (int i = 0; i < tetromino.height; i++)
-            {
-                tetromino.piece[i].resize(tetromino.width, EMPTY);
-            }
-            tetromino.color = PURPLE;
+            tetromino.setAttributes(3, PURPLE);
             tetromino.piece[0][1] = tetromino.color;
             tetromino.piece[1][0] = tetromino.color;
             tetromino.piece[1][1] = tetromino.color;
@@ -364,14 +328,14 @@ Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations)
     for (int it = 0; it < iterations; it++)
     {
         Tetromino temp = rotatedTetromino;
-        rotatedTetromino.height = temp.width;
-        rotatedTetromino.width = temp.height;
+        rotatedTetromino.squareSize = temp.squareSize;
+        rotatedTetromino.squareSize = temp.squareSize;
 
-        for (int i = 0; i < temp.height; i++)
+        for (int i = 0; i < temp.squareSize; i++)
         {
-            for (int j = 0; j < temp.width; j++)
+            for (int j = 0; j < temp.squareSize; j++)
             {
-                rotatedTetromino.piece[rotatedTetromino.height - 1 - j][i] = temp.piece[i][j];
+                rotatedTetromino.piece[rotatedTetromino.squareSize - 1 - j][i] = temp.piece[i][j];
             }
         }
     }
@@ -382,14 +346,14 @@ Tetromino rotatedTetromino(const Tetromino &currentTetromino, int iterations)
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
 {
     Tetromino temp = tetromino;
-    temp.gridX = (GRID_WIDTH - temp.width) / 2;
+    temp.gridX = (GRID_WIDTH - temp.squareSize) / 2;
 
     temp.gridY = 0;
     if (tetromino.id == 'I')
         temp.gridY--;
-    for (int i = 1; i < temp.height; i++)
+    for (int i = 1; i < temp.squareSize; i++)
     {
-        for (int j = 0; j < temp.width; j++)
+        for (int j = 0; j < temp.squareSize; j++)
         {
             if (screenState[temp.gridY + i][temp.gridX + j] != EMPTY)
             {
@@ -403,9 +367,9 @@ std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
 
 bool isValidPosition(const Tetromino &tetromino)
 {
-    for (int i = 0; i < tetromino.height; i++)
+    for (int i = 0; i < tetromino.squareSize; i++)
     {
-        for (int j = 0; j < tetromino.width; j++)
+        for (int j = 0; j < tetromino.squareSize; j++)
         {
             if (tetromino.piece[i][j] != EMPTY)
             {
@@ -429,9 +393,9 @@ bool isValidPosition(const Tetromino &tetromino)
 
 void handleCollision(const Tetromino &tetromino)
 {
-    for (int i = 0; i < tetromino.height; i++)
+    for (int i = 0; i < tetromino.squareSize; i++)
     {
-        for (int j = 0; j < tetromino.width; j++)
+        for (int j = 0; j < tetromino.squareSize; j++)
         {
             if (tetromino.piece[i][j] != EMPTY)
             {
@@ -515,10 +479,10 @@ void clearRows(int &score, sf::Text &textScore)
 
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY)
 {
-    auto rectangle = sf::RectangleShape({BLOCK_SIZE, BLOCK_SIZE});
-    for (int i = 0; i < tetromino.height; i++)
+    auto rectangle = sf::RectangleShape({COLOR_SIZE, COLOR_SIZE});
+    for (int i = 0; i < tetromino.squareSize; i++)
     {
-        for (int j = 0; j < tetromino.width; j++)
+        for (int j = 0; j < tetromino.squareSize; j++)
         {
             if (tetromino.piece[i][j] == EMPTY)
                 continue;
@@ -528,8 +492,8 @@ void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float 
             rectangle.setFillColor(enumToColor(tetromino.color));
             if (tetromino.color != TRANSPARENT)
             {
-                rectangle.setOutlineThickness(-0.75f);
-                rectangle.setOutlineColor(sf::Color(49, 49, 120));
+                rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
+                rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
             }
 
             window.draw(rectangle);
@@ -546,27 +510,26 @@ void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, fl
     auto boxBg = sf::RectangleShape({previewBoxSize, previewBoxSize});
     boxBg.setPosition({previewBoxX, previewBoxY});
     boxBg.setFillColor(enumToColor(EMPTY));
-    boxBg.setOutlineColor(sf::Color(100, 100, 120));
+    boxBg.setOutlineColor(enumToColor(DARK_PURPLE));
     boxBg.setOutlineThickness(3.0f);
     window.draw(boxBg);
 
     auto label = sf::Text(roboto, "NEXT", 36);
-    label.setFillColor(sf::Color::White);
     label.setPosition({previewBoxX + 75, previewBoxY - 50});
     window.draw(label);
 
-    auto rectangle = sf::RectangleShape({BLOCK_SIZE, BLOCK_SIZE});
+    auto rectangle = sf::RectangleShape({COLOR_SIZE, COLOR_SIZE});
 
-    const float pieceWidth = tetromino.width * CELL_SIZE;
-    const float pieceHeight = tetromino.height * CELL_SIZE;
+    const float pieceWidth = tetromino.squareSize * CELL_SIZE;
+    const float pieceHeight = tetromino.squareSize * CELL_SIZE;
 
     const float offsetX = previewBoxX + (previewBoxSize - pieceWidth) / 2.0f;
     float offsetYDenominator = (tetromino.id != 'O') ? 1.5f : 2.0f;
     const float offsetY = previewBoxY + (previewBoxSize - pieceHeight) / offsetYDenominator;
 
-    for (int i = 0; i < tetromino.height; i++)
+    for (int i = 0; i < tetromino.squareSize; i++)
     {
-        for (int j = 0; j < tetromino.width; j++)
+        for (int j = 0; j < tetromino.squareSize; j++)
         {
             if (tetromino.piece[i][j] == EMPTY)
                 continue;
@@ -575,8 +538,8 @@ void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, fl
 
             rectangle.setPosition({posX, posY});
             rectangle.setFillColor(enumToColor(tetromino.color));
-            rectangle.setOutlineThickness(-0.75f);
-            rectangle.setOutlineColor(sf::Color(49, 49, 120));
+            rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
+            rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
             window.draw(rectangle);
         }
     }
@@ -596,11 +559,11 @@ void printGrid(sf::RenderWindow &window, float &startX, float &startY)
     auto gridBg = sf::RectangleShape({TOTAL_GRID_WIDTH, TOTAL_GRID_HEIGHT});
     gridBg.setPosition({START_X, START_Y});
     gridBg.setFillColor(enumToColor(EMPTY));
-    gridBg.setOutlineColor(sf::Color(100, 100, 120));
+    gridBg.setOutlineColor(enumToColor(DARK_PURPLE));
     gridBg.setOutlineThickness(3.0f);
     window.draw(gridBg);
 
-    auto rectangle = sf::RectangleShape({BLOCK_SIZE, BLOCK_SIZE});
+    auto rectangle = sf::RectangleShape({COLOR_SIZE, COLOR_SIZE});
     for (int i = 0; i < GRID_HEIGHT; i++)
     {
         for (int j = 0; j < GRID_WIDTH; j++)
@@ -612,8 +575,8 @@ void printGrid(sf::RenderWindow &window, float &startX, float &startY)
 
             rectangle.setPosition({posX, posY});
             rectangle.setFillColor(enumToColor(screenState[i][j]));
-            rectangle.setOutlineThickness(-0.75f);
-            rectangle.setOutlineColor(sf::Color(49, 49, 120));
+            rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
+            rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
             window.draw(rectangle);
         }
     }
