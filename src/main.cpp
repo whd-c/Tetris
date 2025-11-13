@@ -510,7 +510,7 @@ void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, fl
     auto boxBg = sf::RectangleShape({previewBoxSize, previewBoxSize});
     boxBg.setPosition({previewBoxX, previewBoxY});
     boxBg.setFillColor(enumToColor(EMPTY));
-    boxBg.setOutlineColor(enumToColor(DARK_PURPLE));
+    boxBg.setOutlineColor(sf::Color::White);
     boxBg.setOutlineThickness(3.0f);
     window.draw(boxBg);
 
@@ -559,7 +559,7 @@ void printGrid(sf::RenderWindow &window, float &startX, float &startY)
     auto gridBg = sf::RectangleShape({TOTAL_GRID_WIDTH, TOTAL_GRID_HEIGHT});
     gridBg.setPosition({START_X, START_Y});
     gridBg.setFillColor(enumToColor(EMPTY));
-    gridBg.setOutlineColor(enumToColor(DARK_PURPLE));
+    gridBg.setOutlineColor(sf::Color::White);
     gridBg.setOutlineThickness(3.0f);
     window.draw(gridBg);
 
