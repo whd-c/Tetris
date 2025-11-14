@@ -30,8 +30,10 @@ struct Tetromino
 
     std::vector<std::vector<Color>> piece;
 
+    Tetromino() {}
     Tetromino(char _id)
         : id(_id) {}
+
     void setAttributes(int _squareSize, Color _color)
     {
         squareSize = _squareSize;
@@ -111,11 +113,19 @@ int main()
 
     initializeTetrominoes();
     auto bag = generateBag();
-    std::optional<Tetromino> tempTetromino;
-    if (newTetromino(*bag.begin()))
-        tempTetromino = *newTetromino(*bag.begin());
-    bag.erase(bag.begin());
-    Tetromino currentTetromino = *tempTetromino;
+    std::optional<Tetromino> tempTetromino = newTetromino(*bag.begin());
+    Tetromino currentTetromino;
+    if (tempTetromino)
+    {
+        currentTetromino = *tempTetromino;
+        bag.erase(bag.begin());
+    }
+    else
+    {
+        std::cerr << "Failed to generate tetromino.";
+        return 1;
+    }
+
     while (window.isOpen())
     {
         sf::Time elapsed = clock.getElapsedTime();
@@ -193,6 +203,25 @@ int main()
                     currentTetromino.gridY--;
                     handleCollision(currentTetromino);
                     handleWreck(currentTetromino, bag, score, textScore);
+                }
+                else if (keyPressed->scancode == sf::Keyboard::Scancode::R)
+                {
+                    bag = generateBag();
+                    std::optional<Tetromino> nextTetromino = newTetromino(bag[0]);
+                    if (nextTetromino)
+                    {
+                        for (int i = 0; i < GRID_HEIGHT; i++)
+                        {
+                            for (int j = 0; j < GRID_WIDTH; j++)
+                            {
+                                screenState[i][j] = EMPTY;
+                            }
+                        }
+                        score = 0;
+                        textScore.setString("Score: " + std::to_string(score));
+                        currentTetromino = *nextTetromino;
+                        bag.erase(bag.begin());
+                    }
                 }
             }
         }
@@ -437,6 +466,7 @@ void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, 
 void clearRows(int &score, sf::Text &textScore)
 {
     int writeRow = GRID_HEIGHT - 1;
+    int rowsCleared = 0;
     for (int i = GRID_HEIGHT - 1; i >= 0; i--)
     {
         bool fullRow = true;
@@ -463,17 +493,34 @@ void clearRows(int &score, sf::Text &textScore)
         }
         else
         {
-            score += 100;
-            textScore.setString("Score: " + std::to_string(score));
+            rowsCleared++;
         }
     }
-
     for (int i = writeRow; i >= 0; i--)
     {
         for (int j = 0; j < GRID_WIDTH; j++)
         {
             screenState[i][j] = EMPTY;
         }
+    }
+    switch (rowsCleared)
+    {
+    case 1:
+        score += 40;
+        break;
+    case 2:
+        score += 100;
+        break;
+    case 3:
+        score += 300;
+        break;
+    case 4:
+        score += 1200;
+        break;
+    }
+    if (rowsCleared > 0)
+    {
+        textScore.setString("Score: " + std::to_string(score));
     }
 }
 
