@@ -19,14 +19,21 @@ enum Color
     TRANSPARENT
 };
 
-struct Tetromino
+struct Position
 {
-    int squareSize;
+    int8_t x{};
+    int8_t y{};
+};
+
+class Tetromino
+{
+public:
+    uint8_t squareSize;
     Color color;
     char id;
 
-    int gridX{};
-    int gridY{};
+    Position pos{};
+    int8_t rotationIndex{};
 
     std::vector<std::vector<Color>> piece;
 
@@ -40,10 +47,11 @@ struct Tetromino
 sf::Color enumToColor(Color choice);
 void initializeTetrominoes();
 std::vector<Tetromino> generateBag();
-Tetromino rotatedTetrominoLeft(const Tetromino &currentTetromino);
-Tetromino rotatedTetrominoRight(const Tetromino &currentTetromino);
+Tetromino rotatedTetrominoCCW(const Tetromino &currentTetromino);
+Tetromino rotatedTetrominoCW(const Tetromino &currentTetromino);
+bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece);
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
-bool isValidPosition(const Tetromino &tetromino);
+bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0);
 void handleCollision(const Tetromino &tetromino);
 void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, sf::Text &textScore);
 void clearRows(int &score, sf::Text &textScore);
@@ -60,6 +68,22 @@ std::vector<Tetromino> tetrominoes = {
     {3, 'J', BLUE},
     {3, 'T', PURPLE},
 };
+
+// SRS offset data for all tetrominos except I
+std::array<std::array<Position, 5>, 4> offsetData{{{{{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}},
+                                                   {{{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}}},
+                                                   {{{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}},
+                                                   {{{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}}}};
+// SRS kick table for the I tetromino
+std::array<std::array<Position, 5>, 4> kickTableICW{{{{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}},
+                                                     {{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}}},
+                                                     {{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}}},
+                                                     {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}}}};
+
+std::array<std::array<Position, 5>, 4> kickTableICCW{{{{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}}},
+                                                      {{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}}},
+                                                      {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}},
+                                                      {{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}}}};
 
 constexpr int GRID_WIDTH{10};
 constexpr int GRID_HEIGHT{20};
@@ -124,10 +148,10 @@ int main()
         if (elapsed.asSeconds() > 0.4)
         {
             Tetromino next{currentTetromino};
-            next.gridY += 1;
+            next.pos.y += 1;
             if (isValidPosition(next))
             {
-                currentTetromino.gridY = next.gridY;
+                currentTetromino.pos.y = next.pos.y;
             }
             else
             {
@@ -152,30 +176,34 @@ int main()
                 case sf::Keyboard::Scancode::Up:
                 case sf::Keyboard::Scancode::W:
                 {
-                    Tetromino rotatedLeft{rotatedTetrominoLeft(currentTetromino)};
-                    if (isValidPosition(rotatedLeft))
-                    {
-                        currentTetromino = rotatedLeft;
-                    }
+                    Tetromino rotatedCCW{rotatedTetrominoCCW(currentTetromino)};
+                    if (tryRotate(currentTetromino, rotatedCCW))
+                        // play success sound
+                        ;
+                    else
+                        // play failure sound
+                        ;
                     break;
                 }
                 case sf::Keyboard::Scancode::Z:
                 {
-                    Tetromino rotatedRight{rotatedTetrominoRight(currentTetromino)};
-                    if (isValidPosition(rotatedRight))
-                    {
-                        currentTetromino = rotatedRight;
-                    }
+                    Tetromino rotatedCW{rotatedTetrominoCW(currentTetromino)};
+                    if (tryRotate(currentTetromino, rotatedCW))
+                        // play success sound
+                        ;
+                    else
+                        // play failure sound
+                        ;
                     break;
                 }
                 case sf::Keyboard::Scancode::Right:
                 case sf::Keyboard::Scancode::D:
                 {
                     Tetromino next{currentTetromino};
-                    next.gridX += 1;
+                    next.pos.x += 1;
                     if (isValidPosition(next))
                     {
-                        currentTetromino.gridX = next.gridX;
+                        currentTetromino.pos.x = next.pos.x;
                     }
                     break;
                 }
@@ -183,10 +211,10 @@ int main()
                 case sf::Keyboard::Scancode::S:
                 {
                     Tetromino next{currentTetromino};
-                    next.gridY += 1;
+                    next.pos.y += 1;
                     if (isValidPosition(next))
                     {
-                        currentTetromino.gridY = next.gridY;
+                        currentTetromino.pos.y = next.pos.y;
                     }
                     else
                     {
@@ -199,10 +227,10 @@ int main()
                 case sf::Keyboard::Scancode::A:
                 {
                     Tetromino next{currentTetromino};
-                    next.gridX -= 1;
+                    next.pos.x -= 1;
                     if (isValidPosition(next))
                     {
-                        currentTetromino.gridX = next.gridX;
+                        currentTetromino.pos.x = next.pos.x;
                     }
                     break;
                 }
@@ -210,9 +238,9 @@ int main()
                 {
                     while (isValidPosition(currentTetromino))
                     {
-                        currentTetromino.gridY++;
+                        currentTetromino.pos.y++;
                     }
-                    currentTetromino.gridY--;
+                    currentTetromino.pos.y--;
                     handleCollision(currentTetromino);
                     handleWreck(currentTetromino, bag, score, textScore);
                     break;
@@ -253,9 +281,9 @@ int main()
         ghostTetromino.color = TRANSPARENT;
         while (isValidPosition(ghostTetromino))
         {
-            ghostTetromino.gridY++;
+            ghostTetromino.pos.y++;
         }
-        ghostTetromino.gridY--;
+        ghostTetromino.pos.y--;
 
         window.clear();
         float gridStartX, gridStartY;
@@ -362,46 +390,95 @@ std::vector<Tetromino> generateBag()
     return bag;
 }
 
-Tetromino rotatedTetrominoLeft(const Tetromino &currentTetromino)
+Tetromino rotatedTetrominoCCW(const Tetromino &currentTetromino)
 {
-    Tetromino rotatedTetrominoLeft{currentTetromino};
-    for (int i = 0; i < rotatedTetrominoLeft.squareSize; i++)
+    Tetromino rotatedTetrominoCCW{currentTetromino};
+    if (--rotatedTetrominoCCW.rotationIndex == -1)
+        rotatedTetrominoCCW.rotationIndex = 3;
+    for (int i = 0; i < rotatedTetrominoCCW.squareSize; i++)
     {
-        for (int j = 0; j < rotatedTetrominoLeft.squareSize; j++)
+        for (int j = 0; j < rotatedTetrominoCCW.squareSize; j++)
         {
-            rotatedTetrominoLeft.piece[rotatedTetrominoLeft.squareSize - 1 - j][i] = currentTetromino.piece[i][j];
+            rotatedTetrominoCCW.piece[rotatedTetrominoCCW.squareSize - 1 - j][i] = currentTetromino.piece[i][j];
         }
     }
 
-    return rotatedTetrominoLeft;
+    return rotatedTetrominoCCW;
 }
-Tetromino rotatedTetrominoRight(const Tetromino &currentTetromino)
+Tetromino rotatedTetrominoCW(const Tetromino &currentTetromino)
 {
-    Tetromino rotatedTetrominoRight{currentTetromino};
-    for (int i = 0; i < rotatedTetrominoRight.squareSize; i++)
+    Tetromino rotatedTetrominoCW{currentTetromino};
+    if (++rotatedTetrominoCW.rotationIndex == 4)
+        rotatedTetrominoCW.rotationIndex = 0;
+    for (int i = 0; i < rotatedTetrominoCW.squareSize; i++)
     {
-        for (int j = 0; j < rotatedTetrominoRight.squareSize; j++)
+        for (int j = 0; j < rotatedTetrominoCW.squareSize; j++)
         {
-            rotatedTetrominoRight.piece[j][rotatedTetrominoRight.squareSize - 1 - i] = currentTetromino.piece[i][j];
+            rotatedTetrominoCW.piece[j][rotatedTetrominoCW.squareSize - 1 - i] = currentTetromino.piece[i][j];
         }
     }
 
-    return rotatedTetrominoRight;
+    return rotatedTetrominoCW;
+}
+
+bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece)
+{
+    const int startRot = currentTetromino.rotationIndex;
+    const int endRot = rotatedPiece.rotationIndex;
+    if (rotatedPiece.id == 'I')
+    {
+        bool isCW = (endRot > startRot) || (startRot == 3 && endRot == 0);
+        if (startRot == 0 && endRot == 3)
+        {
+            isCW = false;
+        }
+        const auto &kickTable = isCW ? kickTableICW : kickTableICCW;
+        for (int i = 0; i < 5; i++)
+        {
+            const int deltaX = kickTable[startRot][i].x;
+            const int deltaY = kickTable[startRot][i].y;
+
+            if (isValidPosition(rotatedPiece, deltaX, deltaY))
+            {
+                currentTetromino = rotatedPiece;
+                currentTetromino.pos.x += deltaX;
+                currentTetromino.pos.y += deltaY;
+                return true;
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            const int deltaX = offsetData[startRot][i].x - offsetData[endRot][i].x;
+            const int deltaY = offsetData[startRot][i].y - offsetData[endRot][i].y;
+            if (isValidPosition(rotatedPiece, deltaX, deltaY))
+            {
+                currentTetromino = rotatedPiece;
+                currentTetromino.pos.x += deltaX;
+                currentTetromino.pos.y += deltaY;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
 {
     Tetromino temp{tetromino};
-    temp.gridX = (GRID_WIDTH - temp.squareSize) / 2;
+    temp.pos.x = (GRID_WIDTH - temp.squareSize) / 2;
 
-    temp.gridY = 0;
+    temp.pos.y = 0;
     if (tetromino.id == 'I')
-        temp.gridY--;
+        temp.pos.y--;
+
     for (int i = 1; i < temp.squareSize; i++)
     {
         for (int j = 0; j < temp.squareSize; j++)
         {
-            if (screenState[temp.gridY + i][temp.gridX + j] != EMPTY)
+            if (screenState[temp.pos.y + i][temp.pos.x + j] != EMPTY)
             {
                 return std::nullopt;
             }
@@ -411,7 +488,7 @@ std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
     return temp;
 }
 
-bool isValidPosition(const Tetromino &tetromino)
+bool isValidPosition(const Tetromino &tetromino, int8_t deltaX, int8_t deltaY)
 {
     for (int i = 0; i < tetromino.squareSize; i++)
     {
@@ -419,15 +496,18 @@ bool isValidPosition(const Tetromino &tetromino)
         {
             if (tetromino.piece[i][j] != EMPTY)
             {
-                int gridX = tetromino.gridX + j;
-                int gridY = tetromino.gridY + i;
+                const int8_t gridX = tetromino.pos.x + j + deltaX;
+                const int8_t gridY = tetromino.pos.y + i + deltaY;
 
                 if (gridX < 0 || gridX >= GRID_WIDTH)
                 {
                     return false;
                 }
-
-                if (gridY >= GRID_HEIGHT || screenState[gridY][gridX] != EMPTY)
+                if (gridY >= GRID_HEIGHT)
+                {
+                    return false;
+                }
+                if (gridY >= 0 && screenState[gridY][gridX] != EMPTY)
                 {
                     return false;
                 }
@@ -445,8 +525,8 @@ void handleCollision(const Tetromino &tetromino)
         {
             if (tetromino.piece[i][j] != EMPTY)
             {
-                int gridX{tetromino.gridX + j};
-                int gridY{tetromino.gridY + i};
+                int gridX{tetromino.pos.x + j};
+                int gridY{tetromino.pos.y + i};
 
                 screenState[gridY][gridX] = tetromino.piece[i][j];
                 canHold = true;
@@ -550,10 +630,10 @@ void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float 
     {
         for (int j = 0; j < tetromino.squareSize; j++)
         {
-            if (tetromino.piece[i][j] == EMPTY)
+            if (tetromino.piece[i][j] == EMPTY || tetromino.pos.y + i < 0)
                 continue;
-            const float posX{startX + (tetromino.gridX + j) * CELL_SIZE};
-            const float posY{startY + (tetromino.gridY + i) * CELL_SIZE};
+            const float posX{startX + (tetromino.pos.x + j) * CELL_SIZE};
+            const float posY{startY + (tetromino.pos.y + i) * CELL_SIZE};
             rectangle.setPosition({posX, posY});
             rectangle.setFillColor(enumToColor(tetromino.color));
             if (tetromino.color != TRANSPARENT)
