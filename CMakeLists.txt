@@ -25,5 +25,4 @@ function(copy_resource_dir dir_name)
 endfunction()
 
 copy_resource_dir(favicon)
-copy_resource_dir(img)
 copy_resource_dir(fonts)
