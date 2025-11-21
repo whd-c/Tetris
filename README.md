@@ -20,6 +20,10 @@ A tetris clone, made with love using SFML.
 
 -Press C to hold piece.
 
+# Info
+
+Every 500 score points, a new level awaits.
+
 # Requirements
 
 -CMake
