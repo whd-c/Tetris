@@ -69,10 +69,10 @@ bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece);
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0);
 void handleCollision(const Tetromino &tetromino);
-void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, sf::Text &textScore);
+void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag);
 bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag);
 void printHeldTetromino(sf::RenderWindow &window, float startX, float startY);
-void clearRows(int &score, sf::Text &textScore);
+void clearRows();
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
 void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
 void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);
@@ -106,6 +106,7 @@ std::array<std::array<Position, 5>, 4> kickTableICCW{{{{{0, 0}, {-1, 0}, {2, 0},
 constexpr unsigned int RWIDTH{1920};
 constexpr unsigned int RHEIGHT{1080};
 
+constexpr float DELAY{1.0f};
 constexpr float COLOR_SIZE{40.0f};
 constexpr float SPACING{0.0f};
 constexpr float CELL_SIZE{COLOR_SIZE + SPACING};
@@ -120,10 +121,13 @@ bool hasHeld{false};
 
 sf::Font roboto;
 
+unsigned int level{1};
+int score{};
+
 int main()
 {
     auto window{sf::RenderWindow(sf::VideoMode({RWIDTH, RHEIGHT}), "Tetris", sf::State::Fullscreen)};
-    int score{};
+    unsigned int delayModifier{level};
 
     window.setFramerateLimit(144);
 
@@ -144,9 +148,13 @@ int main()
     }
 
     sf::Text textScore(roboto);
+    sf::Text textLevel(roboto);
 
     textScore.setString("Score: " + std::to_string(score));
     textScore.setCharacterSize(96);
+
+    textLevel.setString("Level " + std::to_string(level));
+    textLevel.setCharacterSize(96);
 
     initializeTetrominoes();
     auto bag{generateBag()};
@@ -163,7 +171,10 @@ int main()
     while (window.isOpen())
     {
         sf::Time elapsed{clock.getElapsedTime()};
-        if (elapsed.asSeconds() > 0.4)
+        delayModifier = level;
+        if (delayModifier > 9)
+            delayModifier = 9;
+        if (elapsed.asSeconds() > DELAY - ((DELAY * (delayModifier - 1)) / 10))
         {
             Tetromino next{currentTetromino};
             next.pos.y += 1;
@@ -174,7 +185,7 @@ int main()
             else
             {
                 handleCollision(currentTetromino);
-                handleWreck(currentTetromino, bag, score, textScore);
+                handleWreck(currentTetromino, bag);
             }
             clock.restart();
         }
@@ -237,7 +248,7 @@ int main()
                     else
                     {
                         handleCollision(currentTetromino);
-                        handleWreck(currentTetromino, bag, score, textScore);
+                        handleWreck(currentTetromino, bag);
                     }
                     break;
                 }
@@ -260,7 +271,7 @@ int main()
                     }
                     currentTetromino.pos.y--;
                     handleCollision(currentTetromino);
-                    handleWreck(currentTetromino, bag, score, textScore);
+                    handleWreck(currentTetromino, bag);
                     break;
                 }
                 case sf::Keyboard::Scancode::R:
@@ -277,7 +288,7 @@ int main()
                             }
                         }
                         score = 0;
-                        textScore.setString("Score: " + std::to_string(score));
+                        level = 1;
                         canHold = true;
                         hasHeld = false;
                         heldTetromino = Tetromino();
@@ -314,18 +325,23 @@ int main()
         float gridStartX, gridStartY;
         float textScoreX{gridStartX + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 2};
         float textScoreY{gridStartY};
+        float textLevelX{gridStartX - GRID_WIDTH * CELL_SIZE};
+        float textLevelY{gridStartY};
         if (bag.empty())
             bag = generateBag();
 
         textScore.setPosition({textScoreX, textScoreY});
+        textLevel.setPosition({textLevelX, textLevelY});
+        textScore.setString("Score: " + std::to_string(score));
+        textLevel.setString("Level " + std::to_string(level));
         printGrid(window, gridStartX, gridStartY);
-        clearRows(score, textScore);
+        clearRows();
         printTetromino(window, ghostTetromino, gridStartX, gridStartY);
         printTetromino(window, currentTetromino, gridStartX, gridStartY);
-        if (!bag.empty())
-            printNextTetromino(window, bag[0], gridStartX, gridStartY);
+        printNextTetromino(window, bag[0], gridStartX, gridStartY);
         printHeldTetromino(window, gridStartX, gridStartY);
         window.draw(textScore);
+        window.draw(textLevel);
         window.display();
     }
 }
@@ -561,7 +577,7 @@ void handleCollision(const Tetromino &tetromino)
     canHold = true;
 }
 
-void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, sf::Text &textScore)
+void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag)
 {
     std::optional<Tetromino> nextTetromino{newTetromino(bag[0])};
     if (!nextTetromino)
@@ -576,11 +592,10 @@ void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, 
         bag = generateBag();
         nextTetromino = newTetromino(bag[0]);
         score = 0;
+        level = 1;
         canHold = true;
         hasHeld = false;
         heldTetromino = Tetromino();
-
-        textScore.setString("Score: " + std::to_string(score));
     }
     if (nextTetromino)
     {
@@ -662,7 +677,7 @@ void printHeldTetromino(sf::RenderWindow &window, float startX, float startY)
     }
 }
 
-void clearRows(int &score, sf::Text &textScore)
+void clearRows()
 {
     int writeRow{GRID_HEIGHT - 1};
     int rowsCleared{};
@@ -718,9 +733,7 @@ void clearRows(int &score, sf::Text &textScore)
         break;
     }
     if (rowsCleared > 0)
-    {
-        textScore.setString("Score: " + std::to_string(score));
-    }
+        level = (score / 500) + 1;
 }
 
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY)
