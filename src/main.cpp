@@ -25,6 +25,9 @@ struct Position
     int8_t y{};
 };
 
+constexpr int GRID_WIDTH{10};
+constexpr int GRID_HEIGHT{20};
+
 class Tetromino
 {
 public:
@@ -37,10 +40,23 @@ public:
 
     std::vector<std::vector<Color>> piece;
 
-    Tetromino() {}
+    Tetromino() : squareSize{},
+                  color{},
+                  id{},
+                  pos{0, 0},
+                  rotationIndex{},
+                  piece{} {}
     Tetromino(int _squareSize, char _id, Color _color)
         : squareSize(_squareSize), id(_id), color(_color), piece(_squareSize, std::vector<Color>(_squareSize, EMPTY))
     {
+    }
+
+    void initializePosition()
+    {
+        pos.x = (GRID_WIDTH - squareSize) / 2;
+        pos.y = 0;
+        if (id == 'I')
+            pos.y--;
     }
 };
 
@@ -54,6 +70,8 @@ std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0);
 void handleCollision(const Tetromino &tetromino);
 void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, sf::Text &textScore);
+bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag);
+void printHeldTetromino(sf::RenderWindow &window, float startX, float startY);
 void clearRows(int &score, sf::Text &textScore);
 void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
 void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
@@ -85,9 +103,6 @@ std::array<std::array<Position, 5>, 4> kickTableICCW{{{{{0, 0}, {-1, 0}, {2, 0},
                                                       {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}},
                                                       {{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}}}};
 
-constexpr int GRID_WIDTH{10};
-constexpr int GRID_HEIGHT{20};
-
 constexpr unsigned int RWIDTH{1920};
 constexpr unsigned int RHEIGHT{1080};
 
@@ -98,7 +113,10 @@ constexpr float RECTANGLE_OUTLINE_SIZE{-1.5f};
 
 // init with EMPTY (0)
 std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState{};
+
+Tetromino heldTetromino;
 bool canHold{true};
+bool hasHeld{false};
 
 sf::Font roboto;
 
@@ -261,6 +279,8 @@ int main()
                         score = 0;
                         textScore.setString("Score: " + std::to_string(score));
                         canHold = true;
+                        hasHeld = false;
+                        heldTetromino = Tetromino();
                         currentTetromino = *next;
                         bag.erase(bag.begin());
                     }
@@ -268,7 +288,12 @@ int main()
                 }
                 case sf::Keyboard::Scancode::C:
                 {
-                    canHold = false;
+                    if (holdTetromino(currentTetromino, bag))
+                        // play success sound
+                        ;
+                    else
+                        // play failure sound
+                        ;
                     break;
                 }
                 default:
@@ -289,12 +314,17 @@ int main()
         float gridStartX, gridStartY;
         float textScoreX{gridStartX + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 2};
         float textScoreY{gridStartY};
+        if (bag.empty())
+            bag = generateBag();
+
         textScore.setPosition({textScoreX, textScoreY});
         printGrid(window, gridStartX, gridStartY);
         clearRows(score, textScore);
         printTetromino(window, ghostTetromino, gridStartX, gridStartY);
         printTetromino(window, currentTetromino, gridStartX, gridStartY);
-        printNextTetromino(window, bag[0], gridStartX, gridStartY);
+        if (!bag.empty())
+            printNextTetromino(window, bag[0], gridStartX, gridStartY);
+        printHeldTetromino(window, gridStartX, gridStartY);
         window.draw(textScore);
         window.display();
     }
@@ -468,11 +498,7 @@ bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece)
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
 {
     Tetromino temp{tetromino};
-    temp.pos.x = (GRID_WIDTH - temp.squareSize) / 2;
-
-    temp.pos.y = 0;
-    if (tetromino.id == 'I')
-        temp.pos.y--;
+    temp.initializePosition();
 
     for (int i = 1; i < temp.squareSize; i++)
     {
@@ -529,10 +555,10 @@ void handleCollision(const Tetromino &tetromino)
                 int gridY{tetromino.pos.y + i};
 
                 screenState[gridY][gridX] = tetromino.piece[i][j];
-                canHold = true;
             }
         }
     }
+    canHold = true;
 }
 
 void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, sf::Text &textScore)
@@ -551,6 +577,9 @@ void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, 
         nextTetromino = newTetromino(bag[0]);
         score = 0;
         canHold = true;
+        hasHeld = false;
+        heldTetromino = Tetromino();
+
         textScore.setString("Score: " + std::to_string(score));
     }
     if (nextTetromino)
@@ -558,8 +587,79 @@ void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag, int &score, 
         tetromino = *nextTetromino;
         bag.erase(bag.begin());
     }
-    if (bag.size() <= 0)
-        bag = generateBag();
+}
+
+bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag)
+{
+    if (!canHold)
+        return false;
+    canHold = false;
+
+    if (!hasHeld)
+    {
+        heldTetromino = tetromino;
+        tetromino = *newTetromino(*bag.begin());
+        bag.erase(bag.begin());
+        hasHeld = true;
+    }
+    else
+    {
+        Tetromino temp = heldTetromino;
+        heldTetromino = tetromino;
+        tetromino = temp;
+    }
+    heldTetromino.initializePosition();
+    // rotate till its at the default rotation
+    while (heldTetromino.rotationIndex != 0)
+    {
+        heldTetromino = rotatedTetrominoCCW(heldTetromino);
+    }
+    return true;
+}
+
+void printHeldTetromino(sf::RenderWindow &window, float startX, float startY)
+{
+
+    const float previewBoxX{startX + GRID_WIDTH * CELL_SIZE - CELL_SIZE * 19};
+    const float previewBoxY{startY + CELL_SIZE * 5};
+    const float previewBoxSize{CELL_SIZE * 6};
+
+    auto boxBg{sf::RectangleShape({previewBoxSize, previewBoxSize})};
+    boxBg.setPosition({previewBoxX, previewBoxY});
+    boxBg.setFillColor(enumToColor(EMPTY));
+    boxBg.setOutlineColor(sf::Color::White);
+    boxBg.setOutlineThickness(3.0f);
+    window.draw(boxBg);
+
+    auto label{sf::Text(roboto, "HOLD", 36)};
+    label.setPosition({previewBoxX + 75, previewBoxY - 50});
+    window.draw(label);
+
+    auto rectangle{sf::RectangleShape({COLOR_SIZE, COLOR_SIZE})};
+
+    const float pieceWidth{heldTetromino.squareSize * CELL_SIZE};
+    const float pieceHeight{heldTetromino.squareSize * CELL_SIZE};
+
+    const float offsetX{previewBoxX + (previewBoxSize - pieceWidth) / 2.0f};
+    const float offsetYDenominator{(heldTetromino.id != 'O') ? 1.5f : 2.0f};
+    const float offsetY{previewBoxY + (previewBoxSize - pieceHeight) / offsetYDenominator};
+
+    for (int i = 0; i < heldTetromino.squareSize; i++)
+    {
+        for (int j = 0; j < heldTetromino.squareSize; j++)
+        {
+            if (heldTetromino.piece[i][j] == EMPTY)
+                continue;
+            const float posX{offsetX + j * CELL_SIZE};
+            const float posY{offsetY + i * CELL_SIZE};
+
+            rectangle.setPosition({posX, posY});
+            rectangle.setFillColor(enumToColor(heldTetromino.color));
+            rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
+            rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
+            window.draw(rectangle);
+        }
+    }
 }
 
 void clearRows(int &score, sf::Text &textScore)
