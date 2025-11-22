@@ -2,8 +2,19 @@ cmake_minimum_required(VERSION 3.28)
 project(CMakeSFMLProject LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++ -pthread")
+if(NOT WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS "")
+else()
+    set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++ -pthread")
+endif()
 
+
+find_program(CMAKE_CXX_COMPILER g++)
+find_program(CMAKE_C_COMPILER gcc)
+
+if(NOT CMAKE_CXX_COMPILER)
+  message(FATAL_ERROR "g++ not found. Please ensure it is in the system PATH.")
+endif()
 
 include(FetchContent)
 FetchContent_Declare(SFML
