@@ -24,6 +24,8 @@ A tetris clone, made with love using SFML.
 
 Every 500 score points, a new level awaits.
 
+<img src="img/preview.png" width="800">
+
 # Requirements
 
 -CMake
