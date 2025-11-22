@@ -571,13 +571,18 @@ std::optional<Tetromino> newTetromino(const Tetromino &tetromino)
     Tetromino temp{tetromino};
     temp.initializePosition();
 
-    for (int i = 1; i < temp.squareSize; i++)
+    for (int i = 0; i < temp.squareSize; i++)
     {
         for (int j = 0; j < temp.squareSize; j++)
         {
-            if (screenState[temp.pos.y + i][temp.pos.x + j] != EMPTY)
+            int gridX = temp.pos.x + j;
+            int gridY = temp.pos.y + i;
+            if (gridY >= 0 && gridY < GRID_HEIGHT && gridX >= 0 && gridX < GRID_WIDTH)
             {
-                return std::nullopt;
+                if (screenState[gridY][gridX] != EMPTY)
+                {
+                    return std::nullopt;
+                }
             }
         }
     }
@@ -632,7 +637,8 @@ void handleCollision(const Tetromino &tetromino)
                 int gridX{tetromino.pos.x + j};
                 int gridY{tetromino.pos.y + i};
 
-                screenState[gridY][gridX] = tetromino.piece[i][j];
+                if (gridY >= 0 && gridY < GRID_HEIGHT && gridX >= 0 && gridX < GRID_WIDTH)
+                    screenState[gridY][gridX] = tetromino.piece[i][j];
             }
         }
     }
