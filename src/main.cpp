@@ -68,6 +68,7 @@ Tetromino rotatedTetrominoCW(const Tetromino &currentTetromino);
 bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece);
 std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
 bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0);
+bool isGrounded(const Tetromino &tetromino);
 void handleCollision(const Tetromino &tetromino);
 void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag);
 bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag);
@@ -107,6 +108,9 @@ constexpr unsigned int RWIDTH{1920};
 constexpr unsigned int RHEIGHT{1080};
 
 constexpr float DELAY{1.0f};
+constexpr float LOCK_DELAY{0.5f};
+constexpr unsigned int LOCK_LIMIT{10};
+
 constexpr float COLOR_SIZE{40.0f};
 constexpr float SPACING{0.0f};
 constexpr float CELL_SIZE{COLOR_SIZE + SPACING};
@@ -129,6 +133,10 @@ int main()
     auto window{sf::RenderWindow(sf::VideoMode({RWIDTH, RHEIGHT}), "Tetris", sf::State::Fullscreen)};
     unsigned int delayModifier{level};
 
+    bool grounded{false};
+    bool wasGrounded{grounded};
+    unsigned int lockCounter{};
+
     window.setFramerateLimit(144);
 
     sf::Image icon;
@@ -139,7 +147,9 @@ int main()
     }
 
     window.setIcon(icon);
-    sf::Clock clock;
+
+    sf::Clock delayClock;
+    sf::Clock lockDelayClock;
 
     if (!roboto.openFromFile("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf"))
     {
@@ -170,24 +180,40 @@ int main()
 
     while (window.isOpen())
     {
-        sf::Time elapsed{clock.getElapsedTime()};
+        sf::Time delayElapsed{delayClock.getElapsedTime()};
+        sf::Time lockDelayElapsed{lockDelayClock.getElapsedTime()};
         delayModifier = level;
         if (delayModifier > 9)
             delayModifier = 9;
-        if (elapsed.asSeconds() > DELAY - ((DELAY * (delayModifier - 1)) / 10))
+        wasGrounded = grounded;
+        grounded = isGrounded(currentTetromino);
+        if (grounded && lockCounter >= LOCK_LIMIT)
         {
-            Tetromino next{currentTetromino};
-            next.pos.y += 1;
-            if (isValidPosition(next))
+            handleCollision(currentTetromino);
+            handleWreck(currentTetromino, bag);
+            lockDelayClock.restart();
+            lockCounter = 0;
+        }
+        if (delayElapsed.asSeconds() > DELAY - ((DELAY * (delayModifier - 1)) / 10))
+        {
+
+            if (!grounded)
             {
-                currentTetromino.pos.y = next.pos.y;
+                currentTetromino.pos.y++;
+                lockDelayClock.restart();
             }
             else
             {
-                handleCollision(currentTetromino);
-                handleWreck(currentTetromino, bag);
+                lockCounter++;
+                if (lockDelayElapsed.asSeconds() >= LOCK_DELAY)
+                {
+                    handleCollision(currentTetromino);
+                    handleWreck(currentTetromino, bag);
+                    lockDelayClock.restart();
+                    lockCounter = 0;
+                }
             }
-            clock.restart();
+            delayClock.restart();
         }
         while (const std::optional event{window.pollEvent()})
         {
@@ -207,8 +233,13 @@ int main()
                 {
                     Tetromino rotatedCCW{rotatedTetrominoCCW(currentTetromino)};
                     if (tryRotate(currentTetromino, rotatedCCW))
+                    {
+                        lockDelayClock.restart();
+                        if (isGrounded(currentTetromino))
+                            lockCounter++;
                         // play success sound
-                        ;
+                    }
+
                     else
                         // play failure sound
                         ;
@@ -218,8 +249,12 @@ int main()
                 {
                     Tetromino rotatedCW{rotatedTetrominoCW(currentTetromino)};
                     if (tryRotate(currentTetromino, rotatedCW))
+                    {
+                        lockDelayClock.restart();
+                        if (isGrounded(currentTetromino))
+                            lockCounter++;
                         // play success sound
-                        ;
+                    }
                     else
                         // play failure sound
                         ;
@@ -233,6 +268,11 @@ int main()
                     if (isValidPosition(next))
                     {
                         currentTetromino.pos.x = next.pos.x;
+                        if (!wasGrounded && isGrounded(currentTetromino))
+                        {
+                            lockDelayClock.restart();
+                            lockCounter++;
+                        }
                     }
                     break;
                 }
@@ -244,11 +284,17 @@ int main()
                     if (isValidPosition(next))
                     {
                         currentTetromino.pos.y = next.pos.y;
+                        lockDelayClock.restart();
                     }
                     else
                     {
-                        handleCollision(currentTetromino);
-                        handleWreck(currentTetromino, bag);
+                        if (lockDelayElapsed.asSeconds() >= LOCK_DELAY || lockCounter >= LOCK_LIMIT)
+                        {
+                            handleCollision(currentTetromino);
+                            handleWreck(currentTetromino, bag);
+                            lockDelayClock.restart();
+                            lockCounter = 0;
+                        }
                     }
                     break;
                 }
@@ -260,6 +306,11 @@ int main()
                     if (isValidPosition(next))
                     {
                         currentTetromino.pos.x = next.pos.x;
+                        if (!wasGrounded && isGrounded(currentTetromino))
+                        {
+                            lockDelayClock.restart();
+                            lockCounter++;
+                        }
                     }
                     break;
                 }
@@ -272,6 +323,8 @@ int main()
                     currentTetromino.pos.y--;
                     handleCollision(currentTetromino);
                     handleWreck(currentTetromino, bag);
+                    lockDelayClock.restart();
+                    lockCounter = 0;
                     break;
                 }
                 case sf::Keyboard::Scancode::R:
@@ -291,6 +344,8 @@ int main()
                         level = 1;
                         canHold = true;
                         hasHeld = false;
+                        lockDelayClock.restart();
+                        lockCounter = 0;
                         heldTetromino = Tetromino();
                         currentTetromino = *next;
                         bag.erase(bag.begin());
@@ -300,8 +355,11 @@ int main()
                 case sf::Keyboard::Scancode::C:
                 {
                     if (holdTetromino(currentTetromino, bag))
+                    {
+                        lockDelayClock.restart();
+                        lockCounter = 0;
                         // play success sound
-                        ;
+                    }
                     else
                         // play failure sound
                         ;
@@ -473,11 +531,8 @@ bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece)
     const int endRot = rotatedPiece.rotationIndex;
     if (rotatedPiece.id == 'I')
     {
-        bool isCW = (endRot > startRot) || (startRot == 3 && endRot == 0);
-        if (startRot == 0 && endRot == 3)
-        {
-            isCW = false;
-        }
+        const int nextRotCW = (startRot + 1) % 4;
+        const bool isCW = (endRot == nextRotCW);
         const auto &kickTable = isCW ? kickTableICW : kickTableICCW;
         for (int i = 0; i < 5; i++)
         {
@@ -557,6 +612,13 @@ bool isValidPosition(const Tetromino &tetromino, int8_t deltaX, int8_t deltaY)
         }
     }
     return true;
+}
+
+bool isGrounded(const Tetromino &tetromino)
+{
+    Tetromino next = tetromino;
+    next.pos.y++;
+    return !isValidPosition(next);
 }
 
 void handleCollision(const Tetromino &tetromino)
