@@ -37,3 +37,24 @@ Every 500 score points, a new level awaits.
 # How to run
 
 This project has a CMakeLists.txt ready, so u can make a build folder and configure with CMake.
+
+```
+mkdir build
+cd build
+```
+
+On windows:
+
+```
+cmake -G "MinGW Makefiles" ..
+cmake --build .
+```
+
+On linux:
+
+```
+cmake ..
+make
+```
+
+Output is in bin folder.
