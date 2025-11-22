@@ -4,6 +4,7 @@
 #include <random>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 enum Color
 {
@@ -125,6 +126,9 @@ bool hasHeld{false};
 
 sf::Font roboto;
 
+sf::SoundBuffer theme("audio/theme.mp3");
+sf::Sound themeSound(theme);
+
 unsigned int level{1};
 int score{};
 
@@ -156,6 +160,18 @@ int main()
         std::cerr << "Failed to load font\n";
         return 1;
     }
+
+    themeSound.setLooping(true);
+    themeSound.setPlayingOffset(sf::seconds(1.0f));
+    themeSound.play();
+
+    sf::SoundBuffer rotate("audio/rotate.wav");
+    sf::Sound rotateSound(rotate);
+    rotateSound.setVolume(75.0f);
+
+    sf::SoundBuffer hardDrop("audio/hard-drop.wav");
+    sf::Sound hardDropSound(hardDrop);
+    hardDropSound.setVolume(75.0f);
 
     sf::Text textScore(roboto);
     sf::Text textLevel(roboto);
@@ -237,12 +253,8 @@ int main()
                         lockDelayClock.restart();
                         if (isGrounded(currentTetromino))
                             lockCounter++;
-                        // play success sound
+                        rotateSound.play();
                     }
-
-                    else
-                        // play failure sound
-                        ;
                     break;
                 }
                 case sf::Keyboard::Scancode::Z:
@@ -253,11 +265,8 @@ int main()
                         lockDelayClock.restart();
                         if (isGrounded(currentTetromino))
                             lockCounter++;
-                        // play success sound
+                        rotateSound.play();
                     }
-                    else
-                        // play failure sound
-                        ;
                     break;
                 }
                 case sf::Keyboard::Scancode::Right:
@@ -325,6 +334,7 @@ int main()
                     handleWreck(currentTetromino, bag);
                     lockDelayClock.restart();
                     lockCounter = 0;
+                    hardDropSound.play();
                     break;
                 }
                 case sf::Keyboard::Scancode::R:
@@ -349,6 +359,7 @@ int main()
                         heldTetromino = Tetromino();
                         currentTetromino = *next;
                         bag.erase(bag.begin());
+                        themeSound.setPlayingOffset(sf::seconds(1.0f));
                     }
                     break;
                 }
@@ -663,6 +674,7 @@ void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag)
         level = 1;
         canHold = true;
         hasHeld = false;
+        themeSound.setPlayingOffset(sf::seconds(1.0f));
         heldTetromino = Tetromino();
     }
     if (nextTetromino)

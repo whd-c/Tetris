@@ -27,7 +27,7 @@ FetchContent_MakeAvailable(SFML)
 
 add_executable(Tetris src/main.cpp favicon/resource.rc)
 target_compile_features(Tetris PRIVATE cxx_std_17)
-target_link_libraries(Tetris PRIVATE SFML::Graphics)
+target_link_libraries(Tetris PRIVATE SFML::Graphics SFML::Audio)
 
 function(copy_resource_dir dir_name)
     set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/${dir_name}")
@@ -37,3 +37,4 @@ endfunction()
 
 copy_resource_dir(favicon)
 copy_resource_dir(fonts)
+copy_resource_dir(audio)
