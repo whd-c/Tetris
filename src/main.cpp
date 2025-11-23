@@ -154,7 +154,7 @@ int main()
     sf::Clock delayClock;
     sf::Clock lockDelayClock;
 
-    if (!roboto.openFromFile("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf"))
+    if (!roboto.openFromFile("fonts/Roboto-VariableFont_wdth,wght.ttf"))
     {
         std::cerr << "Failed to load font.\n";
         return 1;
