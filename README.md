@@ -2,39 +2,45 @@
 
 A tetris clone, made with love using SFML.
 
-# Instructions
+## Instructions
 
--Press Escape to quit.
+- Press **Escape** to quit.
 
--Press A or Left Arrow to move left, press D or Right Arrow to move right.
+- Press **A** or **Left Arrow** to move left.
 
--Press W or Up Arrow to rotate counterclockwise.
+- Press **D** or **Right Arrow** to move right.
 
--Press Z to rotate clockwise.
+- Press **W** or **Up** Arrow to rotate counterclockwise.
 
--Press S to soft drop.
+- Press **Z** to rotate clockwise.
 
--Press Space to hard drop.
+- Press **S** to soft drop.
 
--Press R to reset level.
+- Press **Space** to hard drop.
 
--Press C to hold piece.
+- Press **R** to reset level.
 
-# Info
+- Press **C** to hold piece.
+
+## Info
 
 Every 500 score points, a new level awaits.
 
 <img src="img/preview.png" width="800">
 
-# Requirements
+## Requirements
 
--CMake
+- **C++ 17** or higher
 
--MinGW C++ compiler.
+- **CMake**
 
--Git
+- **MinGW C++ compiler**.
 
-# How to run
+- **Git**
+
+- (Linux only) **Make**
+
+## How to run
 
 This project has a CMakeLists.txt ready, so u can make a build folder and configure with CMake.
 
@@ -43,18 +49,18 @@ mkdir build
 cd build
 ```
 
-On windows:
+On Windows:
 
 ```
 cmake -G "MinGW Makefiles" ..
 cmake --build .
 ```
 
-On linux:
+On Linux:
 
 ```
 cmake ..
 make
 ```
 
-Output is in bin folder.
+Output is in the /bin folder.
