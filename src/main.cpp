@@ -126,8 +126,7 @@ bool hasHeld{false};
 
 sf::Font roboto;
 
-sf::SoundBuffer theme("audio/theme.mp3");
-sf::Sound themeSound(theme);
+sf::Music themeMusic("audio/theme.mp3");
 
 unsigned int level{1};
 int score{};
@@ -161,9 +160,9 @@ int main()
         return 1;
     }
 
-    themeSound.setLooping(true);
-    themeSound.setPlayingOffset(sf::seconds(1.0f));
-    themeSound.play();
+    themeMusic.setLooping(true);
+    themeMusic.setPlayingOffset(sf::seconds(1.0f));
+    themeMusic.play();
 
     sf::SoundBuffer rotate("audio/rotate.wav");
     sf::Sound rotateSound(rotate);
@@ -359,7 +358,7 @@ int main()
                         heldTetromino = Tetromino();
                         currentTetromino = *next;
                         bag.erase(bag.begin());
-                        themeSound.setPlayingOffset(sf::seconds(1.0f));
+                        themeMusic.setPlayingOffset(sf::seconds(1.0f));
                     }
                     break;
                 }
@@ -674,7 +673,7 @@ void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag)
         level = 1;
         canHold = true;
         hasHeld = false;
-        themeSound.setPlayingOffset(sf::seconds(1.0f));
+        themeMusic.setPlayingOffset(sf::seconds(1.0f));
         heldTetromino = Tetromino();
     }
     if (nextTetromino)
