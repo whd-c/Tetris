@@ -126,7 +126,7 @@ bool hasHeld{false};
 
 sf::Font roboto;
 
-sf::Music themeMusic("audio/theme.mp3");
+sf::Music themeMusic;
 
 unsigned int level{1};
 int score{};
@@ -145,7 +145,7 @@ int main()
     sf::Image icon;
     if (!icon.loadFromFile("favicon/favicon.png"))
     {
-        std::cerr << "Failed to load icon\n";
+        std::cerr << "Failed to load icon.\n";
         return 1;
     }
 
@@ -156,7 +156,13 @@ int main()
 
     if (!roboto.openFromFile("fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf"))
     {
-        std::cerr << "Failed to load font\n";
+        std::cerr << "Failed to load font.\n";
+        return 1;
+    }
+
+    if (!themeMusic.openFromFile("audio/theme.mp3"))
+    {
+        std::cerr << "Failed to load theme music.\n";
         return 1;
     }
 
@@ -164,11 +170,21 @@ int main()
     themeMusic.setPlayingOffset(sf::seconds(1.0f));
     themeMusic.play();
 
-    sf::SoundBuffer rotate("audio/rotate.wav");
+    sf::SoundBuffer rotate;
+    if (!rotate.loadFromFile("audio/rotate.wav"))
+    {
+        std::cerr << "Failed to load rotate sound.\n";
+        return 1;
+    }
     sf::Sound rotateSound(rotate);
     rotateSound.setVolume(75.0f);
 
-    sf::SoundBuffer hardDrop("audio/hard-drop.wav");
+    sf::SoundBuffer hardDrop;
+    if (!hardDrop.loadFromFile("audio/hard-drop.wav"))
+    {
+        std::cerr << "Failed to load hard-drop sound.\n";
+        return 1;
+    }
     sf::Sound hardDropSound(hardDrop);
     hardDropSound.setVolume(75.0f);
 
