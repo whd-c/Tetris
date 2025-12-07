@@ -1,21 +1,19 @@
 #pragma once
 #include "tetromino.hpp"
 
-extern std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState;
-extern sf::Font roboto;
-extern Tetromino heldTetromino;
-
 class Render
 {
 public:
     float startX, startY;
-    Render(sf::RenderWindow &_window) : window(_window) {};
+    Render(sf::RenderWindow &_window, sf::Font _roboto) : window(_window), roboto(_roboto) {};
 
-    void drawHeldTetromino();
+    void drawHeldTetromino(const Tetromino &tetromino);
     void drawTetromino(const Tetromino &tetromino);
     void drawNextTetromino(const Tetromino &tetromino);
-    void drawGrid();
+    void drawText(sf::Text &text, std::string content, float posX, float posY);
+    void drawGrid(std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState);
 
 private:
     sf::RenderWindow &window;
+    const sf::Font roboto;
 };

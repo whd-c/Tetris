@@ -1,6 +1,6 @@
 #include "render.hpp"
 
-void Render::drawHeldTetromino()
+void Render::drawHeldTetromino(const Tetromino &tetromino)
 {
     const float previewBoxX{startX + GRID_WIDTH * CELL_SIZE - CELL_SIZE * 19};
     const float previewBoxY{startY + CELL_SIZE * 5};
@@ -19,24 +19,24 @@ void Render::drawHeldTetromino()
 
     auto rectangle{sf::RectangleShape({COLOR_SIZE, COLOR_SIZE})};
 
-    const float pieceWidth{heldTetromino.squareSize * CELL_SIZE};
-    const float pieceHeight{heldTetromino.squareSize * CELL_SIZE};
+    const float pieceWidth{tetromino.squareSize * CELL_SIZE};
+    const float pieceHeight{tetromino.squareSize * CELL_SIZE};
 
     const float offsetX{previewBoxX + (previewBoxSize - pieceWidth) / 2.0f};
-    const float offsetYDenominator{(heldTetromino.id != 'O') ? 1.5f : 2.0f};
+    const float offsetYDenominator{(tetromino.id != 'O') ? 1.5f : 2.0f};
     const float offsetY{previewBoxY + (previewBoxSize - pieceHeight) / offsetYDenominator};
 
-    for (int i = 0; i < heldTetromino.squareSize; i++)
+    for (int i = 0; i < tetromino.squareSize; i++)
     {
-        for (int j = 0; j < heldTetromino.squareSize; j++)
+        for (int j = 0; j < tetromino.squareSize; j++)
         {
-            if (heldTetromino.piece[i][j] == EMPTY)
+            if (tetromino.piece[i][j] == EMPTY)
                 continue;
             const float posX{offsetX + j * CELL_SIZE};
             const float posY{offsetY + i * CELL_SIZE};
 
             rectangle.setPosition({posX, posY});
-            rectangle.setFillColor(enumToColor(heldTetromino.color));
+            rectangle.setFillColor(enumToColor(tetromino.color));
             rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
             rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
             window.draw(rectangle);
@@ -112,7 +112,14 @@ void Render::drawNextTetromino(const Tetromino &tetromino)
     }
 }
 
-void Render::drawGrid()
+void Render::drawText(sf::Text &text, std::string content, float posX, float posY)
+{
+    text.setPosition({posX, posY});
+    text.setString(content);
+    window.draw(text);
+}
+
+void Render::drawGrid(std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState)
 {
     constexpr float TOTAL_GRID_WIDTH{GRID_WIDTH * CELL_SIZE};
     constexpr float TOTAL_GRID_HEIGHT{GRID_HEIGHT * CELL_SIZE};
