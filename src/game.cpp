@@ -4,37 +4,48 @@ Game::Game() : rotateSound(rotate), hardDropSound(hardDrop)
 {
     window = sf::RenderWindow(sf::VideoMode({RWIDTH, RHEIGHT}), "Tetris", sf::State::Fullscreen);
     window.setFramerateLimit(144);
+    if (!loadAssets())
+    {
+        throw std::runtime_error("Game initialization failed due to critical asset loading errors.");
+    }
+}
+
+bool Game::loadAssets()
+{
     if (!icon.loadFromFile("favicon/favicon.png"))
     {
         std::cerr << "Failed to load icon.\n";
-        throw icon;
+        return false;
     }
-    window.setIcon(icon);
     if (!roboto.openFromFile("fonts/Roboto-VariableFont_wdth,wght.ttf"))
     {
         std::cerr << "Failed to load font.\n";
-        throw roboto;
+        return false;
     }
     if (!themeMusic.openFromFile("audio/theme.mp3"))
     {
         std::cerr << "Failed to load theme music.\n";
+        return false;
     }
-    themeMusic.setLooping(true);
-    themeMusic.setPlayingOffset(sf::seconds(1.0f));
-    themeMusic.play();
     if (!rotate.loadFromFile("audio/rotate.wav"))
     {
         std::cerr << "Failed to load rotate sound.\n";
-        throw rotate;
+        return false;
     }
-    rotateSound.setVolume(75.0f);
-
     if (!hardDrop.loadFromFile("audio/hard-drop.wav"))
     {
         std::cerr << "Failed to load hard-drop sound.\n";
-        throw hardDrop;
+        return false;
     }
+
+    window.setIcon(icon);
+    themeMusic.setLooping(true);
+    themeMusic.setPlayingOffset(sf::seconds(1.0f));
+    themeMusic.play();
+    rotateSound.setVolume(75.0f);
     hardDropSound.setVolume(75.0f);
+
+    return true;
 }
 
 void Game::run()
@@ -42,10 +53,10 @@ void Game::run()
     sf::Text textScore(roboto);
     sf::Text textLevel(roboto);
 
-    textScore.setString("Score: " + std::to_string(gameManager.score));
+    textScore.setString("Score: " + std::to_string(gameManager.getScore()));
     textScore.setCharacterSize(96);
 
-    textLevel.setString("Level " + std::to_string(gameManager.level));
+    textLevel.setString("Level " + std::to_string(gameManager.getLevel()));
     textLevel.setCharacterSize(96);
 
     gameManager.initializeTetrominoes();
@@ -54,7 +65,7 @@ void Game::run()
     if (!tempTetromino)
     {
         std::cerr << "Failed to generate tetromino.\n";
-        throw std::runtime_error("Failed to generate initial Tetromino (Bag Empty/Invalid).");
+        throw std::runtime_error("Failed to generate initial Tetromino.");
     }
     currentTetromino = *tempTetromino;
     bag.erase(bag.begin());
@@ -63,7 +74,7 @@ void Game::run()
     {
         sf::Time delayElapsed{delayClock.getElapsedTime()};
         sf::Time lockDelayElapsed = lockDelayClock.getElapsedTime();
-        uint8_t delayModifier = gameManager.level;
+        uint8_t delayModifier = gameManager.getLevel();
         if (delayModifier > 9)
             delayModifier = 9;
         wasGrounded = grounded;
@@ -113,13 +124,13 @@ void Game::run()
         renderer.drawTetromino(ghostTetromino);
         renderer.drawTetromino(currentTetromino);
         renderer.drawNextTetromino(bag[0]);
-        renderer.drawHeldTetromino(gameManager.heldTetromino);
-        const float textLevelX{renderer.startX - GRID_WIDTH * CELL_SIZE};
-        const float textLevelY{renderer.startY};
-        renderer.drawText(textLevel, "Level " + std::to_string(gameManager.level), textLevelX, textLevelY);
-        const float textScoreX{renderer.startX + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 2};
-        const float textScoreY{renderer.startY};
-        renderer.drawText(textScore, "Score: " + std::to_string(gameManager.score), textScoreX, textScoreY);
+        renderer.drawHeldTetromino(gameManager.getHeldTetromino());
+        const float textLevelX{renderer.getStartX() - GRID_WIDTH * CELL_SIZE};
+        const float textLevelY{renderer.getStartY()};
+        renderer.drawText(textLevel, "Level " + std::to_string(gameManager.getLevel()), textLevelX, textLevelY);
+        const float textScoreX{renderer.getStartX() + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 2};
+        const float textScoreY{renderer.getStartY()};
+        renderer.drawText(textScore, "Score: " + std::to_string(gameManager.getScore()), textScoreX, textScoreY);
         window.display();
     }
 }
@@ -245,13 +256,13 @@ void Game::handleInputs()
                             gameManager.screenState[i][j] = EMPTY;
                         }
                     }
-                    gameManager.score = 0;
-                    gameManager.level = 1;
-                    gameManager.canHold = true;
-                    gameManager.hasHeld = false;
+                    gameManager.setScore(0);
+                    gameManager.setLevel(1);
+                    gameManager.setCanHold(true);
+                    gameManager.setHasHeld(false);
                     lockDelayClock.restart();
                     lockCounter = 0;
-                    gameManager.heldTetromino = Tetromino();
+                    gameManager.setHeldTetromino(Tetromino());
                     currentTetromino = *next;
                     bag.erase(bag.begin());
                     themeMusic.setPlayingOffset(sf::seconds(1.0f));
@@ -267,8 +278,10 @@ void Game::handleInputs()
                     // play success sound
                 }
                 else
+                {
                     // play failure sound
-                    ;
+                }
+
                 break;
             }
             default:

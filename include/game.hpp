@@ -37,5 +37,6 @@ private:
     Render renderer{window, roboto};
     GameManager gameManager{themeMusic};
 
+    bool loadAssets();
     void handleInputs();
 };
