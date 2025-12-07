@@ -31,6 +31,7 @@ add_executable(${PROJECT_NAME}
     src/tetromino.cpp
     src/render.cpp
     src/game_manager.cpp
+    src/game.cpp
     favicon/resource.rc
     )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)

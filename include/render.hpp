@@ -5,7 +5,7 @@ class Render
 {
 public:
     float startX, startY;
-    Render(sf::RenderWindow &_window, sf::Font _roboto) : window(_window), roboto(_roboto) {};
+    Render(sf::RenderWindow &_window, sf::Font &_roboto) : window(_window), roboto(_roboto) {};
 
     void drawHeldTetromino(const Tetromino &tetromino);
     void drawTetromino(const Tetromino &tetromino);
@@ -15,5 +15,5 @@ public:
 
 private:
     sf::RenderWindow &window;
-    const sf::Font roboto;
+    sf::Font &roboto;
 };
