@@ -39,6 +39,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE SFML::Graphics SFML::Audio)
+target_compile_options(${PROJECT_NAME} PRIVATE
+    -Wall        
+    -Wextra
+    -Wpedantic
+    -Werror      
+)
 
 function(copy_resource_dir dir_name)
     set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/${dir_name}")
