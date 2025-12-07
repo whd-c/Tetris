@@ -21,6 +21,18 @@ public:
     void clearRows();
 
     std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState{};
+
+    int getScore() const { return score; }
+    unsigned int getLevel() const { return level; }
+    Tetromino getHeldTetromino() const { return heldTetromino; }
+
+    void setScore(int _score) { score = _score; }
+    void setLevel(unsigned int _level) { level = _level; }
+    void setCanHold(bool _canHold) { canHold = _canHold; }
+    void setHasHeld(bool _hasHeld) { hasHeld = _hasHeld; }
+    void setHeldTetromino(const Tetromino &_heldTetromino) { heldTetromino = _heldTetromino; }
+
+private:
     std::vector<Tetromino> tetrominoes = {
         {2, 'O', YELLOW},
         {4, 'I', CYAN},
@@ -30,15 +42,13 @@ public:
         {3, 'J', BLUE},
         {3, 'T', PURPLE},
     };
+
+    sf::Music &themeMusic;
     Tetromino heldTetromino;
 
     bool canHold{true};
     bool hasHeld{false};
 
-    sf::Music &themeMusic;
-
     unsigned int level{1};
     int score{};
-
-private:
 };

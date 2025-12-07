@@ -4,7 +4,6 @@
 class Render
 {
 public:
-    float startX, startY;
     Render(sf::RenderWindow &_window, sf::Font &_roboto) : window(_window), roboto(_roboto) {};
 
     void drawHeldTetromino(const Tetromino &tetromino);
@@ -13,7 +12,12 @@ public:
     void drawText(sf::Text &text, std::string content, float posX, float posY);
     void drawGrid(std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState);
 
+    float getStartX() const { return startX; }
+    float getStartY() const { return startY; }
+
 private:
+    float startX, startY;
+
     sf::RenderWindow &window;
     sf::Font &roboto;
 };
