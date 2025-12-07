@@ -8,14 +8,6 @@ else()
     set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++ -pthread")
 endif()
 
-
-find_program(CMAKE_CXX_COMPILER g++)
-find_program(CMAKE_C_COMPILER gcc)
-
-if(NOT CMAKE_CXX_COMPILER)
-  message(FATAL_ERROR "g++ not found. Please ensure it is in the system PATH.")
-endif()
-
 include(FetchContent)
 FetchContent_Declare(SFML
     GIT_REPOSITORY https://github.com/SFML/SFML.git
@@ -32,7 +24,7 @@ add_executable(${PROJECT_NAME}
     src/render.cpp
     src/game_manager.cpp
     src/game.cpp
-    favicon/resource.rc
+    icon/resource.rc
     )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -52,6 +44,6 @@ function(copy_resource_dir dir_name)
     file(COPY "${SOURCE_DIR}/" DESTINATION "${DEST_DIR}")
 endfunction()
 
-copy_resource_dir(favicon)
+copy_resource_dir(icon)
 copy_resource_dir(fonts)
 copy_resource_dir(audio)

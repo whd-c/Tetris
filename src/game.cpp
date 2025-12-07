@@ -12,7 +12,7 @@ Game::Game() : rotateSound(rotate), hardDropSound(hardDrop)
 
 bool Game::loadAssets()
 {
-    if (!icon.loadFromFile("favicon/favicon.png"))
+    if (!icon.loadFromFile("icon/icon.png"))
     {
         std::cerr << "Failed to load icon.\n";
         return false;
