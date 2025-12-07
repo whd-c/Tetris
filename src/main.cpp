@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include "common.hpp"
 
 enum Color
 {
@@ -25,9 +26,6 @@ struct Position
     int8_t x{};
     int8_t y{};
 };
-
-constexpr int GRID_WIDTH{10};
-constexpr int GRID_HEIGHT{20};
 
 class Tetromino
 {
@@ -61,23 +59,23 @@ public:
     }
 };
 
-sf::Color enumToColor(Color choice);
-void initializeTetrominoes();
-std::vector<Tetromino> generateBag();
-Tetromino rotatedTetrominoCCW(const Tetromino &currentTetromino);
-Tetromino rotatedTetrominoCW(const Tetromino &currentTetromino);
-bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece);
-std::optional<Tetromino> newTetromino(const Tetromino &tetromino);
-bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0);
-bool isGrounded(const Tetromino &tetromino);
-void handleCollision(const Tetromino &tetromino);
-void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag);
-bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag);
-void printHeldTetromino(sf::RenderWindow &window, float startX, float startY);
-void clearRows();
-void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
-void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);
-void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);
+sf::Color enumToColor(Color choice);                                                                       // state
+void initializeTetrominoes();                                                                              // state
+std::vector<Tetromino> generateBag();                                                                      // state
+Tetromino rotatedTetrominoCCW(const Tetromino &currentTetromino);                                          // state
+Tetromino rotatedTetrominoCW(const Tetromino &currentTetromino);                                           // state
+bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece);                                // state
+std::optional<Tetromino> newTetromino(const Tetromino &tetromino);                                         // state
+bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0);                    // state
+bool isGrounded(const Tetromino &tetromino);                                                               // tetromino
+void handleCollision(const Tetromino &tetromino);                                                          // state
+void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag);                                       // state
+bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag);                                     // state
+void printHeldTetromino(sf::RenderWindow &window, float startX, float startY);                             // draw
+void clearRows();                                                                                          // state
+void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);     // draw
+void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY); // draw
+void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);                                      // draw
 
 std::vector<Tetromino> tetrominoes = {
     {2, 'O', YELLOW},
@@ -104,18 +102,6 @@ std::array<std::array<Position, 5>, 4> kickTableICCW{{{{{0, 0}, {-1, 0}, {2, 0},
                                                       {{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}}},
                                                       {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}},
                                                       {{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}}}};
-
-constexpr unsigned int RWIDTH{1920};
-constexpr unsigned int RHEIGHT{1080};
-
-constexpr float DELAY{1.0f};
-constexpr float LOCK_DELAY{0.5f};
-constexpr unsigned int LOCK_LIMIT{10};
-
-constexpr float COLOR_SIZE{40.0f};
-constexpr float SPACING{0.0f};
-constexpr float CELL_SIZE{COLOR_SIZE + SPACING};
-constexpr float RECTANGLE_OUTLINE_SIZE{-1.5f};
 
 // init with EMPTY (0)
 std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState{};

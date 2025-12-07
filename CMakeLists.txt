@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(CMakeSFMLProject LANGUAGES CXX)
+project(Tetris LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 if(NOT WIN32)
@@ -25,9 +25,12 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(Tetris src/main.cpp favicon/resource.rc)
-target_compile_features(Tetris PRIVATE cxx_std_17)
-target_link_libraries(Tetris PRIVATE SFML::Graphics SFML::Audio)
+add_executable(${PROJECT_NAME} src/main.cpp favicon/resource.rc)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE SFML::Graphics SFML::Audio)
 
 function(copy_resource_dir dir_name)
     set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/${dir_name}")
