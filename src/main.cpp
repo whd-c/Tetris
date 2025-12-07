@@ -6,76 +6,19 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "common.hpp"
+#include "tetromino.hpp"
+#include "render.hpp"
 
-enum Color
-{
-    EMPTY,
-    CYAN,
-    BLUE,
-    ORANGE,
-    YELLOW,
-    GREEN,
-    PURPLE,
-    RED,
-    DARK_PURPLE,
-    TRANSPARENT
-};
-
-struct Position
-{
-    int8_t x{};
-    int8_t y{};
-};
-
-class Tetromino
-{
-public:
-    uint8_t squareSize;
-    Color color;
-    char id;
-
-    Position pos{};
-    int8_t rotationIndex{};
-
-    std::vector<std::vector<Color>> piece;
-
-    Tetromino() : squareSize{},
-                  color{},
-                  id{},
-                  pos{0, 0},
-                  rotationIndex{},
-                  piece{} {}
-    Tetromino(int _squareSize, char _id, Color _color)
-        : squareSize(_squareSize), id(_id), color(_color), piece(_squareSize, std::vector<Color>(_squareSize, EMPTY))
-    {
-    }
-
-    void initializePosition()
-    {
-        pos.x = (GRID_WIDTH - squareSize) / 2;
-        pos.y = 0;
-        if (id == 'I')
-            pos.y--;
-    }
-};
-
-sf::Color enumToColor(Color choice);                                                                       // state
-void initializeTetrominoes();                                                                              // state
-std::vector<Tetromino> generateBag();                                                                      // state
-Tetromino rotatedTetrominoCCW(const Tetromino &currentTetromino);                                          // state
-Tetromino rotatedTetrominoCW(const Tetromino &currentTetromino);                                           // state
-bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece);                                // state
-std::optional<Tetromino> newTetromino(const Tetromino &tetromino);                                         // state
-bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0);                    // state
-bool isGrounded(const Tetromino &tetromino);                                                               // tetromino
-void handleCollision(const Tetromino &tetromino);                                                          // state
-void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag);                                       // state
-bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag);                                     // state
-void printHeldTetromino(sf::RenderWindow &window, float startX, float startY);                             // draw
-void clearRows();                                                                                          // state
-void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY);     // draw
-void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY); // draw
-void printGrid(sf::RenderWindow &window, float &gridX, float &gridY);                                      // draw
+void initializeTetrominoes();                                                           // state
+std::vector<Tetromino> generateBag();                                                   // state
+bool tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece);             // state
+std::optional<Tetromino> newTetromino(const Tetromino &tetromino);                      // state
+bool isValidPosition(const Tetromino &tetromino, int8_t deltaX = 0, int8_t deltaY = 0); // state
+bool isGrounded(const Tetromino &tetromino);                                            // tetromino
+void handleCollision(const Tetromino &tetromino);                                       // state
+void handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag);                    // state
+bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag);                  // state
+void clearRows();                                                                       // state
 
 std::vector<Tetromino> tetrominoes = {
     {2, 'O', YELLOW},
@@ -87,23 +30,8 @@ std::vector<Tetromino> tetrominoes = {
     {3, 'T', PURPLE},
 };
 
-// SRS offset data for all tetrominos except I
-std::array<std::array<Position, 5>, 4> offsetData{{{{{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}},
-                                                   {{{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}}},
-                                                   {{{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}},
-                                                   {{{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}}}};
-// SRS kick table for the I tetromino
-std::array<std::array<Position, 5>, 4> kickTableICW{{{{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}},
-                                                     {{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}}},
-                                                     {{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}}},
-                                                     {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}}}};
-
-std::array<std::array<Position, 5>, 4> kickTableICCW{{{{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}}},
-                                                      {{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}}},
-                                                      {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}},
-                                                      {{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}}}};
-
 // init with EMPTY (0)
+
 std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> screenState{};
 
 Tetromino heldTetromino;
@@ -121,6 +49,8 @@ int main()
 {
     auto window{sf::RenderWindow(sf::VideoMode({RWIDTH, RHEIGHT}), "Tetris", sf::State::Fullscreen)};
     unsigned int delayModifier{level};
+
+    Render renderer{window};
 
     bool grounded{false};
     bool wasGrounded{grounded};
@@ -248,7 +178,7 @@ int main()
                 case sf::Keyboard::Scancode::Up:
                 case sf::Keyboard::Scancode::W:
                 {
-                    Tetromino rotatedCCW{rotatedTetrominoCCW(currentTetromino)};
+                    Tetromino rotatedCCW{currentTetromino.rotatedCCW()};
                     if (tryRotate(currentTetromino, rotatedCCW))
                     {
                         lockDelayClock.restart();
@@ -260,7 +190,7 @@ int main()
                 }
                 case sf::Keyboard::Scancode::Z:
                 {
-                    Tetromino rotatedCW{rotatedTetrominoCW(currentTetromino)};
+                    Tetromino rotatedCW{currentTetromino.rotatedCW()};
                     if (tryRotate(currentTetromino, rotatedCW))
                     {
                         lockDelayClock.restart();
@@ -392,11 +322,10 @@ int main()
         ghostTetromino.pos.y--;
 
         window.clear();
-        float gridStartX, gridStartY;
-        float textScoreX{gridStartX + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 2};
-        float textScoreY{gridStartY};
-        float textLevelX{gridStartX - GRID_WIDTH * CELL_SIZE};
-        float textLevelY{gridStartY};
+        float textScoreX{renderer.startX + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 2};
+        float textScoreY{renderer.startY};
+        float textLevelX{renderer.startX - GRID_WIDTH * CELL_SIZE};
+        float textLevelY{renderer.startY};
         if (bag.empty())
             bag = generateBag();
 
@@ -404,46 +333,18 @@ int main()
         textLevel.setPosition({textLevelX, textLevelY});
         textScore.setString("Score: " + std::to_string(score));
         textLevel.setString("Level " + std::to_string(level));
-        printGrid(window, gridStartX, gridStartY);
+        renderer.drawGrid();
         clearRows();
-        printTetromino(window, ghostTetromino, gridStartX, gridStartY);
-        printTetromino(window, currentTetromino, gridStartX, gridStartY);
-        printNextTetromino(window, bag[0], gridStartX, gridStartY);
-        printHeldTetromino(window, gridStartX, gridStartY);
+        renderer.drawTetromino(ghostTetromino);
+        renderer.drawTetromino(currentTetromino);
+        renderer.drawNextTetromino(bag[0]);
+        renderer.drawHeldTetromino();
         window.draw(textScore);
         window.draw(textLevel);
         window.display();
     }
 }
 
-sf::Color enumToColor(Color choice)
-{
-    switch (choice)
-    {
-    case EMPTY:
-        return sf::Color(66, 73, 82);
-    case CYAN:
-        return sf::Color::Cyan;
-    case BLUE:
-        return sf::Color::Blue;
-    case ORANGE:
-        return sf::Color(255, 127, 0);
-    case YELLOW:
-        return sf::Color::Yellow;
-    case GREEN:
-        return sf::Color::Green;
-    case PURPLE:
-        return sf::Color(128, 0, 128);
-    case RED:
-        return sf::Color::Red;
-    case DARK_PURPLE:
-        return sf::Color(49, 49, 80);
-    case TRANSPARENT:
-        return sf::Color(255, 255, 255, 64);
-    default:
-        return sf::Color::Black;
-    }
-}
 void initializeTetrominoes()
 {
     for (Tetromino &tetromino : tetrominoes)
@@ -713,51 +614,6 @@ bool holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &bag)
     return true;
 }
 
-void printHeldTetromino(sf::RenderWindow &window, float startX, float startY)
-{
-
-    const float previewBoxX{startX + GRID_WIDTH * CELL_SIZE - CELL_SIZE * 19};
-    const float previewBoxY{startY + CELL_SIZE * 5};
-    const float previewBoxSize{CELL_SIZE * 6};
-
-    auto boxBg{sf::RectangleShape({previewBoxSize, previewBoxSize})};
-    boxBg.setPosition({previewBoxX, previewBoxY});
-    boxBg.setFillColor(enumToColor(EMPTY));
-    boxBg.setOutlineColor(sf::Color::White);
-    boxBg.setOutlineThickness(3.0f);
-    window.draw(boxBg);
-
-    auto label{sf::Text(roboto, "HOLD", 36)};
-    label.setPosition({previewBoxX + 75, previewBoxY - 50});
-    window.draw(label);
-
-    auto rectangle{sf::RectangleShape({COLOR_SIZE, COLOR_SIZE})};
-
-    const float pieceWidth{heldTetromino.squareSize * CELL_SIZE};
-    const float pieceHeight{heldTetromino.squareSize * CELL_SIZE};
-
-    const float offsetX{previewBoxX + (previewBoxSize - pieceWidth) / 2.0f};
-    const float offsetYDenominator{(heldTetromino.id != 'O') ? 1.5f : 2.0f};
-    const float offsetY{previewBoxY + (previewBoxSize - pieceHeight) / offsetYDenominator};
-
-    for (int i = 0; i < heldTetromino.squareSize; i++)
-    {
-        for (int j = 0; j < heldTetromino.squareSize; j++)
-        {
-            if (heldTetromino.piece[i][j] == EMPTY)
-                continue;
-            const float posX{offsetX + j * CELL_SIZE};
-            const float posY{offsetY + i * CELL_SIZE};
-
-            rectangle.setPosition({posX, posY});
-            rectangle.setFillColor(enumToColor(heldTetromino.color));
-            rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
-            rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
-            window.draw(rectangle);
-        }
-    }
-}
-
 void clearRows()
 {
     int writeRow{GRID_HEIGHT - 1};
@@ -815,109 +671,4 @@ void clearRows()
     }
     if (rowsCleared > 0)
         level = (score / 500) + 1;
-}
-
-void printTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY)
-{
-    auto rectangle{sf::RectangleShape({COLOR_SIZE, COLOR_SIZE})};
-    for (int i = 0; i < tetromino.squareSize; i++)
-    {
-        for (int j = 0; j < tetromino.squareSize; j++)
-        {
-            if (tetromino.piece[i][j] == EMPTY || tetromino.pos.y + i < 0)
-                continue;
-            const float posX{startX + (tetromino.pos.x + j) * CELL_SIZE};
-            const float posY{startY + (tetromino.pos.y + i) * CELL_SIZE};
-            rectangle.setPosition({posX, posY});
-            rectangle.setFillColor(enumToColor(tetromino.color));
-            if (tetromino.color != TRANSPARENT)
-            {
-                rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
-                rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
-            }
-
-            window.draw(rectangle);
-        }
-    }
-}
-
-void printNextTetromino(sf::RenderWindow &window, const Tetromino &tetromino, float startX, float startY)
-{
-    const float previewBoxX{startX + GRID_WIDTH * CELL_SIZE + CELL_SIZE * 3};
-    const float previewBoxY{startY + CELL_SIZE * 5};
-    const float previewBoxSize{CELL_SIZE * 6};
-
-    auto boxBg{sf::RectangleShape({previewBoxSize, previewBoxSize})};
-    boxBg.setPosition({previewBoxX, previewBoxY});
-    boxBg.setFillColor(enumToColor(EMPTY));
-    boxBg.setOutlineColor(sf::Color::White);
-    boxBg.setOutlineThickness(3.0f);
-    window.draw(boxBg);
-
-    auto label{sf::Text(roboto, "NEXT", 36)};
-    label.setPosition({previewBoxX + 75, previewBoxY - 50});
-    window.draw(label);
-
-    auto rectangle{sf::RectangleShape({COLOR_SIZE, COLOR_SIZE})};
-
-    const float pieceWidth{tetromino.squareSize * CELL_SIZE};
-    const float pieceHeight{tetromino.squareSize * CELL_SIZE};
-
-    const float offsetX{previewBoxX + (previewBoxSize - pieceWidth) / 2.0f};
-    const float offsetYDenominator{(tetromino.id != 'O') ? 1.5f : 2.0f};
-    const float offsetY{previewBoxY + (previewBoxSize - pieceHeight) / offsetYDenominator};
-
-    for (int i = 0; i < tetromino.squareSize; i++)
-    {
-        for (int j = 0; j < tetromino.squareSize; j++)
-        {
-            if (tetromino.piece[i][j] == EMPTY)
-                continue;
-            const float posX{offsetX + j * CELL_SIZE};
-            const float posY{offsetY + i * CELL_SIZE};
-
-            rectangle.setPosition({posX, posY});
-            rectangle.setFillColor(enumToColor(tetromino.color));
-            rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
-            rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
-            window.draw(rectangle);
-        }
-    }
-}
-
-void printGrid(sf::RenderWindow &window, float &startX, float &startY)
-{
-    constexpr float TOTAL_GRID_WIDTH{GRID_WIDTH * CELL_SIZE};
-    constexpr float TOTAL_GRID_HEIGHT{GRID_HEIGHT * CELL_SIZE};
-
-    static const float START_X{(window.getSize().x - TOTAL_GRID_WIDTH) / 2.0f};
-    static const float START_Y{(window.getSize().y - TOTAL_GRID_HEIGHT) / 2.0f};
-
-    startX = START_X;
-    startY = START_Y;
-
-    auto gridBg{sf::RectangleShape({TOTAL_GRID_WIDTH, TOTAL_GRID_HEIGHT})};
-    gridBg.setPosition({START_X, START_Y});
-    gridBg.setFillColor(enumToColor(EMPTY));
-    gridBg.setOutlineColor(sf::Color::White);
-    gridBg.setOutlineThickness(3.0f);
-    window.draw(gridBg);
-
-    auto rectangle{sf::RectangleShape({COLOR_SIZE, COLOR_SIZE})};
-    for (int i = 0; i < GRID_HEIGHT; i++)
-    {
-        for (int j = 0; j < GRID_WIDTH; j++)
-        {
-            if (screenState[i][j] == EMPTY)
-                continue;
-            const float posX{START_X + j * CELL_SIZE};
-            const float posY{START_Y + i * CELL_SIZE};
-
-            rectangle.setPosition({posX, posY});
-            rectangle.setFillColor(enumToColor(screenState[i][j]));
-            rectangle.setOutlineThickness(RECTANGLE_OUTLINE_SIZE);
-            rectangle.setOutlineColor(enumToColor(DARK_PURPLE));
-            window.draw(rectangle);
-        }
-    }
 }

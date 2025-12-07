@@ -25,7 +25,13 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(${PROJECT_NAME} src/main.cpp favicon/resource.rc)
+add_executable(${PROJECT_NAME} 
+    src/main.cpp
+    src/colors.cpp 
+    src/tetromino.cpp
+    src/render.cpp
+    favicon/resource.rc
+    )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
