@@ -7,7 +7,7 @@
 class GameManager
 {
 public:
-    GameManager(sf::Music &_themeMusic) : themeMusic(_themeMusic) {};
+    GameManager(sf::Music &_themeMusic, uint8_t &_lockCounter) : themeMusic(_themeMusic), lockCounter(_lockCounter) {};
 
     void initializeTetrominoes();
     std::vector<Tetromino> generateBag();
@@ -49,6 +49,7 @@ private:
     bool canHold{true};
     bool hasHeld{false};
 
+    uint8_t lockCounter;
     uint16_t level{1};
     uint32_t score{};
 };

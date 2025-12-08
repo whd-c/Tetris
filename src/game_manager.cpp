@@ -116,7 +116,7 @@ std::optional<Tetromino> GameManager::newTetromino(const Tetromino &tetromino)
             int8_t gridY = temp.pos.y + i;
             if (gridY >= 0 && gridY < GRID_HEIGHT && gridX >= 0 && gridX < GRID_WIDTH)
             {
-                if (screenState[gridY][gridX] != EMPTY)
+                if (screenState[gridY][gridX] != EMPTY && temp.piece[i][j] != EMPTY)
                 {
                     return std::nullopt;
                 }
@@ -197,6 +197,7 @@ void GameManager::handleWreck(Tetromino &tetromino, std::vector<Tetromino> &bag)
         nextTetromino = newTetromino(bag[0]);
         score = 0;
         level = 1;
+        lockCounter = 0;
         canHold = true;
         hasHeld = false;
         themeMusic.setPlayingOffset(sf::seconds(1.0f));
@@ -218,16 +219,29 @@ bool GameManager::holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &ba
     if (!hasHeld)
     {
         heldTetromino = tetromino;
-        tetromino = *newTetromino(*bag.begin());
+        auto nextTetromino = newTetromino(*bag.begin());
+        if (!nextTetromino)
+        {
+            canHold = false;
+            return false;
+        }
+        tetromino = *nextTetromino;
         bag.erase(bag.begin());
         hasHeld = true;
     }
     else
     {
         Tetromino temp = heldTetromino;
+        auto nextTetromino = newTetromino(temp);
+        if (!nextTetromino)
+        {
+            canHold = false;
+            return false;
+        }
         heldTetromino = tetromino;
-        tetromino = temp;
+        tetromino = *nextTetromino;
     }
+
     heldTetromino.initializePosition();
     // rotate till its at the default rotation
     while (heldTetromino.rotationIndex != 0)
