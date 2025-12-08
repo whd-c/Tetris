@@ -24,6 +24,10 @@ private:
     sf::Sound rotateSound;
     sf::SoundBuffer hardDrop;
     sf::Sound hardDropSound;
+    sf::SoundBuffer hold;
+    sf::Sound holdSound;
+    sf::SoundBuffer invalid;
+    sf::Sound invalidSound;
 
     Tetromino currentTetromino;
     std::vector<Tetromino> bag;
@@ -38,7 +42,7 @@ private:
     uint8_t lockCounter{};
 
     Render renderer{window, roboto};
-    GameManager gameManager{themeMusic};
+    GameManager gameManager{themeMusic, lockCounter};
 
     void applyView();
     void loadAssets();

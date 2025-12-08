@@ -1,6 +1,6 @@
 #include "game.hpp"
 
-Game::Game() : rotateSound(rotate), hardDropSound(hardDrop)
+Game::Game() : rotateSound(rotate), hardDropSound(hardDrop), holdSound(hold), invalidSound(invalid)
 {
     window = sf::RenderWindow(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
     window.setFramerateLimit(FRAME_RATE);
@@ -70,13 +70,23 @@ void Game::loadAssets()
     {
         throw std::runtime_error("Failed to load hard-drop sound.\n");
     }
+    if (!hold.loadFromFile("audio/hold.wav"))
+    {
+        throw std::runtime_error("Failed to load hold sound.\n");
+    }
+    if (!invalid.loadFromFile("audio/invalid.mp3"))
+    {
+        throw std::runtime_error("Failed to load invalid sound.\n");
+    }
 
     window.setIcon(icon);
     themeMusic.setLooping(true);
     themeMusic.setPlayingOffset(sf::seconds(1.0f));
     themeMusic.play();
-    rotateSound.setVolume(75.0f);
+    rotateSound.setVolume(50.0f);
     hardDropSound.setVolume(75.0f);
+    holdSound.setVolume(75.0f);
+    invalidSound.setVolume(50.0f);
 }
 
 void Game::run()
@@ -322,11 +332,11 @@ void Game::handleInputs()
                 {
                     lockDelayClock.restart();
                     lockCounter = 0;
-                    // play success sound
+                    holdSound.play();
                 }
                 else
                 {
-                    // play failure sound
+                    invalidSound.play();
                 }
 
                 break;
