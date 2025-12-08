@@ -6,6 +6,8 @@ A tetris clone, made with love using SFML.
 
 - Press **Escape** to quit.
 
+- Press **F11** to switch between fullscreen and windowed.
+
 - Press **A** or **Left Arrow** to move left.
 
 - Press **D** or **Right Arrow** to move right.
