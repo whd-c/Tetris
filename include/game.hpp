@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 
 #include "common.hpp"
 #include "tetromino.hpp"
@@ -42,6 +41,6 @@ private:
     GameManager gameManager{themeMusic};
 
     void applyView();
-    bool loadAssets();
+    void loadAssets();
     void handleInputs();
 };

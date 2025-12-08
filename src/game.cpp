@@ -9,11 +9,7 @@ Game::Game() : rotateSound(rotate), hardDropSound(hardDrop)
     fixedView.setCenter({TARGET_WIDTH / 2.0f, TARGET_HEIGHT / 2.0f});
 
     applyView();
-
-    if (!loadAssets())
-    {
-        throw std::runtime_error("Game initialization failed due to critical asset loading errors.");
-    }
+    loadAssets();
 }
 void Game::applyView()
 {
@@ -52,32 +48,27 @@ void Game::applyView()
     window.setView(fixedView);
 }
 
-bool Game::loadAssets()
+void Game::loadAssets()
 {
     if (!icon.loadFromFile("icon/icon.png"))
     {
-        std::cerr << "Failed to load icon.\n";
-        return false;
+        throw std::runtime_error("Failed to load icon.\n");
     }
     if (!roboto.openFromFile("fonts/Roboto-VariableFont_wdth,wght.ttf"))
     {
-        std::cerr << "Failed to load font.\n";
-        return false;
+        throw std::runtime_error("Failed to load font.\n");
     }
     if (!themeMusic.openFromFile("audio/theme.mp3"))
     {
-        std::cerr << "Failed to load theme music.\n";
-        return false;
+        throw std::runtime_error("Failed to load theme music.\n");
     }
     if (!rotate.loadFromFile("audio/rotate.wav"))
     {
-        std::cerr << "Failed to load rotate sound.\n";
-        return false;
+        throw std::runtime_error("Failed to load rotate sound.\n");
     }
     if (!hardDrop.loadFromFile("audio/hard-drop.wav"))
     {
-        std::cerr << "Failed to load hard-drop sound.\n";
-        return false;
+        throw std::runtime_error("Failed to load hard-drop sound.\n");
     }
 
     window.setIcon(icon);
@@ -86,8 +77,6 @@ bool Game::loadAssets()
     themeMusic.play();
     rotateSound.setVolume(75.0f);
     hardDropSound.setVolume(75.0f);
-
-    return true;
 }
 
 void Game::run()
@@ -106,7 +95,6 @@ void Game::run()
     std::optional<Tetromino> tempTetromino{gameManager.newTetromino(*bag.begin())};
     if (!tempTetromino)
     {
-        std::cerr << "Failed to generate tetromino.\n";
         throw std::runtime_error("Failed to generate initial Tetromino.");
     }
     currentTetromino = *tempTetromino;
