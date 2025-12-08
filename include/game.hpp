@@ -14,6 +14,10 @@ public:
 
 private:
     sf::RenderWindow window;
+    sf::View fixedView;
+    bool isFullscreen{false};
+    const sf::VideoMode fullscreenMode = sf::VideoMode::getDesktopMode();
+
     sf::Image icon;
     sf::Font roboto;
     sf::Music themeMusic;
@@ -37,6 +41,7 @@ private:
     Render renderer{window, roboto};
     GameManager gameManager{themeMusic};
 
+    void applyView();
     bool loadAssets();
     void handleInputs();
 };

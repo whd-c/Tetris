@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <string_view>
 
 enum Color
 {
@@ -40,8 +41,11 @@ constexpr std::array<std::array<Position, 5>, 4> kickTableICCW{{{{{0, 0}, {-1, 0
 constexpr int GRID_WIDTH{10};
 constexpr int GRID_HEIGHT{20};
 
-constexpr unsigned int RWIDTH{1920};
-constexpr unsigned int RHEIGHT{1080};
+constexpr unsigned int WINDOW_WIDTH{1152};
+constexpr unsigned int WINDOW_HEIGHT{648};
+constexpr unsigned int TARGET_WIDTH{1920};
+constexpr unsigned int TARGET_HEIGHT{1080};
+constexpr std::string_view WINDOW_TITLE{"Tetris"};
 
 constexpr float DELAY{1.0f};
 constexpr float LOCK_DELAY{0.5f};

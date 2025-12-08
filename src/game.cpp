@@ -2,12 +2,54 @@
 
 Game::Game() : rotateSound(rotate), hardDropSound(hardDrop)
 {
-    window = sf::RenderWindow(sf::VideoMode({RWIDTH, RHEIGHT}), "Tetris", sf::State::Fullscreen);
+    window = sf::RenderWindow(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
     window.setFramerateLimit(144);
+
+    fixedView.setSize({TARGET_WIDTH, TARGET_HEIGHT});
+    fixedView.setCenter({TARGET_WIDTH / 2.0f, TARGET_HEIGHT / 2.0f});
+
+    applyView();
+
     if (!loadAssets())
     {
         throw std::runtime_error("Game initialization failed due to critical asset loading errors.");
     }
+}
+void Game::applyView()
+{
+    sf::Vector2u currentSize = window.getSize();
+    float windowWidth = static_cast<float>(currentSize.x);
+    float windowHeight = static_cast<float>(currentSize.y);
+
+    const float targetWidth = static_cast<float>(TARGET_WIDTH);
+    const float targetHeight = static_cast<float>(TARGET_HEIGHT);
+
+    float windowRatio = windowWidth / windowHeight;
+    float targetRatio = targetWidth / targetHeight;
+
+    float scaleX = 1.0f;
+    float scaleY = 1.0f;
+    float viewportX = 0.0f;
+    float viewportY = 0.0f;
+
+    if (windowRatio > targetRatio)
+    {
+        scaleX = targetRatio / windowRatio;
+        viewportX = (1.0f - scaleX) / 2.0f;
+    }
+    else if (windowRatio < targetRatio)
+    {
+        scaleY = windowRatio / targetRatio;
+        viewportY = (1.0f - scaleY) / 2.0f;
+    }
+
+    fixedView.setSize({targetWidth, targetHeight});
+    fixedView.setCenter({targetWidth / 2.0f, targetHeight / 2.0f});
+
+    sf::FloatRect viewportRect({viewportX, viewportY}, {scaleX, scaleY});
+    fixedView.setViewport(viewportRect);
+
+    window.setView(fixedView);
 }
 
 bool Game::loadAssets()
@@ -150,6 +192,23 @@ void Game::handleInputs()
             case sf::Keyboard::Scancode::Escape:
                 window.close();
                 break;
+            case sf::Keyboard::Scancode::F11:
+            {
+                isFullscreen = !isFullscreen;
+                if (isFullscreen)
+                {
+                    window.create(fullscreenMode, static_cast<std::string>(WINDOW_TITLE), sf::State::Fullscreen);
+                }
+                else
+                {
+                    window.create(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
+                    window.setIcon(icon);
+                }
+                window.setFramerateLimit(144);
+                applyView();
+                break;
+            }
+
             case sf::Keyboard::Scancode::Up:
             case sf::Keyboard::Scancode::W:
             {

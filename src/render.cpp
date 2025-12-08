@@ -124,8 +124,8 @@ void Render::drawGrid(std::array<std::array<Color, GRID_WIDTH>, GRID_HEIGHT> scr
     constexpr float TOTAL_GRID_WIDTH{GRID_WIDTH * CELL_SIZE};
     constexpr float TOTAL_GRID_HEIGHT{GRID_HEIGHT * CELL_SIZE};
 
-    static const float START_X{(window.getSize().x - TOTAL_GRID_WIDTH) / 2.0f};
-    static const float START_Y{(window.getSize().y - TOTAL_GRID_HEIGHT) / 2.0f};
+    static const float START_X{(TARGET_WIDTH - TOTAL_GRID_WIDTH) / 2.0f};
+    static const float START_Y{(TARGET_HEIGHT - TOTAL_GRID_HEIGHT) / 2.0f};
 
     startX = START_X;
     startY = START_Y;
