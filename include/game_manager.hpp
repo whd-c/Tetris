@@ -49,6 +49,6 @@ private:
     bool canHold{true};
     bool hasHeld{false};
 
-    unsigned int level{1};
-    int score{};
+    uint16_t level{1};
+    uint32_t score{};
 };

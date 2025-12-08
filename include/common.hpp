@@ -38,18 +38,19 @@ constexpr std::array<std::array<Position, 5>, 4> kickTableICCW{{{{{0, 0}, {-1, 0
                                                                 {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}},
                                                                 {{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}}}};
 
-constexpr int GRID_WIDTH{10};
-constexpr int GRID_HEIGHT{20};
+constexpr uint8_t GRID_WIDTH{10};
+constexpr uint8_t GRID_HEIGHT{20};
 
-constexpr unsigned int WINDOW_WIDTH{1152};
-constexpr unsigned int WINDOW_HEIGHT{648};
-constexpr unsigned int TARGET_WIDTH{1920};
-constexpr unsigned int TARGET_HEIGHT{1080};
+constexpr uint16_t WINDOW_WIDTH{1152};
+constexpr uint16_t WINDOW_HEIGHT{648};
+constexpr uint16_t TARGET_WIDTH{1920};
+constexpr uint16_t TARGET_HEIGHT{1080};
+constexpr uint8_t FRAME_RATE{60};
 constexpr std::string_view WINDOW_TITLE{"Tetris"};
 
 constexpr float DELAY{1.0f};
 constexpr float LOCK_DELAY{0.5f};
-constexpr unsigned int LOCK_LIMIT{10};
+constexpr uint8_t LOCK_LIMIT{10};
 
 constexpr float COLOR_SIZE{40.0f};
 constexpr float SPACING{0.0f};

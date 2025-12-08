@@ -3,7 +3,7 @@
 Game::Game() : rotateSound(rotate), hardDropSound(hardDrop)
 {
     window = sf::RenderWindow(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
-    window.setFramerateLimit(144);
+    window.setFramerateLimit(FRAME_RATE);
 
     fixedView.setSize({TARGET_WIDTH, TARGET_HEIGHT});
     fixedView.setCenter({TARGET_WIDTH / 2.0f, TARGET_HEIGHT / 2.0f});
@@ -204,7 +204,7 @@ void Game::handleInputs()
                     window.create(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
                     window.setIcon(icon);
                 }
-                window.setFramerateLimit(144);
+                window.setFramerateLimit(FRAME_RATE);
                 applyView();
                 break;
             }

@@ -64,17 +64,17 @@ std::vector<Tetromino> GameManager::generateBag()
 
 bool GameManager::tryRotate(Tetromino &currentTetromino, const Tetromino &rotatedPiece)
 {
-    const int startRot = currentTetromino.rotationIndex;
-    const int endRot = rotatedPiece.rotationIndex;
+    const int8_t startRot = currentTetromino.rotationIndex;
+    const int8_t endRot = rotatedPiece.rotationIndex;
     if (rotatedPiece.id == 'I')
     {
-        const int nextRotCW = (startRot + 1) % 4;
+        const int8_t nextRotCW = (startRot + 1) % 4;
         const bool isCW = (endRot == nextRotCW);
         const auto &kickTable = isCW ? kickTableICW : kickTableICCW;
         for (int i = 0; i < 5; i++)
         {
-            const int deltaX = kickTable[startRot][i].x;
-            const int deltaY = kickTable[startRot][i].y;
+            const int8_t deltaX = kickTable[startRot][i].x;
+            const int8_t deltaY = kickTable[startRot][i].y;
 
             if (isValidPosition(rotatedPiece, deltaX, deltaY))
             {
@@ -89,8 +89,8 @@ bool GameManager::tryRotate(Tetromino &currentTetromino, const Tetromino &rotate
     {
         for (int i = 0; i < 5; i++)
         {
-            const int deltaX = offsetData[startRot][i].x - offsetData[endRot][i].x;
-            const int deltaY = offsetData[startRot][i].y - offsetData[endRot][i].y;
+            const int8_t deltaX = offsetData[startRot][i].x - offsetData[endRot][i].x;
+            const int8_t deltaY = offsetData[startRot][i].y - offsetData[endRot][i].y;
             if (isValidPosition(rotatedPiece, deltaX, deltaY))
             {
                 currentTetromino = rotatedPiece;
@@ -112,8 +112,8 @@ std::optional<Tetromino> GameManager::newTetromino(const Tetromino &tetromino)
     {
         for (int j = 0; j < temp.squareSize; j++)
         {
-            int gridX = temp.pos.x + j;
-            int gridY = temp.pos.y + i;
+            int8_t gridX = temp.pos.x + j;
+            int8_t gridY = temp.pos.y + i;
             if (gridY >= 0 && gridY < GRID_HEIGHT && gridX >= 0 && gridX < GRID_WIDTH)
             {
                 if (screenState[gridY][gridX] != EMPTY)
@@ -239,8 +239,8 @@ bool GameManager::holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &ba
 
 void GameManager::clearRows()
 {
-    int writeRow{GRID_HEIGHT - 1};
-    int rowsCleared{};
+    int8_t writeRow{GRID_HEIGHT - 1};
+    int8_t rowsCleared{};
     for (int i = GRID_HEIGHT - 1; i >= 0; i--)
     {
         bool fullRow{true};
