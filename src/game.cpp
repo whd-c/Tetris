@@ -137,7 +137,7 @@ void Game::run()
             else
             {
                 lockCounter++;
-                if (lockDelayElapsed.asSeconds() >= LOCK_DELAY)
+                if (lockDelayElapsed.asSeconds() >= LOCK_DELAY - ((LOCK_DELAY * (delayModifier - 1)) / 10))
                 {
                     gameManager.handleCollision(currentTetromino);
                     gameManager.handleWreck(currentTetromino, bag);
