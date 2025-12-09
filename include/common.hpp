@@ -28,7 +28,7 @@ constexpr std::array<std::array<Position, 5>, 4> offsetData{{{{{0, 0}, {0, 0}, {
                                                              {{{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}},
                                                              {{{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}}}};
 // SRS kick table for the I tetromino (along with useful kicks)
-const std::array<std::vector<Position>, 4> kickTableICW{{{{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}, {-2, 1}}},
+const std::array<std::vector<Position>, 4> kickTableICW{{{{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}, {-2, 1}, {0, -2}}},
                                                          {{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}, {2, -1}}},
                                                          {{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}}},
                                                          {{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}, {1, -2}}}}};
@@ -41,8 +41,8 @@ const std::array<std::vector<Position>, 4> kickTableICCW{{{{{0, 0}, {-1, 0}, {2,
 constexpr uint8_t GRID_WIDTH{10};
 constexpr uint8_t GRID_HEIGHT{20};
 
-constexpr uint16_t WINDOW_WIDTH{1152};
-constexpr uint16_t WINDOW_HEIGHT{648};
+constexpr uint16_t DEFAULT_WINDOW_WIDTH{1344};
+constexpr uint16_t DEFAULT_WINDOW_HEIGHT{756};
 constexpr uint16_t TARGET_WIDTH{1920};
 constexpr uint16_t TARGET_HEIGHT{1080};
 constexpr uint8_t FRAME_RATE{60};

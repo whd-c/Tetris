@@ -5,7 +5,7 @@ sf::Color enumToColor(Color choice)
     switch (choice)
     {
     case EMPTY:
-        return sf::Color(66, 73, 82);
+        return sf::Color(20, 34, 56);
     case CYAN:
         return sf::Color::Cyan;
     case BLUE:
@@ -21,7 +21,7 @@ sf::Color enumToColor(Color choice)
     case RED:
         return sf::Color::Red;
     case DARK_PURPLE:
-        return sf::Color(49, 49, 80);
+        return sf::Color(10, 20, 60);
     case TRANSPARENT:
         return sf::Color(255, 255, 255, 64);
     default:

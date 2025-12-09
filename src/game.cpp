@@ -2,7 +2,7 @@
 
 Game::Game() : rotateSound(rotate), hardDropSound(hardDrop), holdSound(hold), invalidSound(invalid)
 {
-    window = sf::RenderWindow(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
+    window = sf::RenderWindow(sf::VideoMode({DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
     window.setFramerateLimit(FRAME_RATE);
 
     fixedView.setSize({TARGET_WIDTH, TARGET_HEIGHT});
@@ -126,7 +126,7 @@ void Game::run()
             lockDelayClock.restart();
             lockCounter = 0;
         }
-        if (delayElapsed.asSeconds() > DELAY - ((DELAY * (delayModifier - 1)) / 10))
+        if (delayElapsed.asSeconds() > DELAY - ((DELAY * (delayModifier - 1)) / 15))
         {
 
             if (!grounded)
@@ -159,7 +159,7 @@ void Game::run()
             bag = gameManager.generateBag();
         gameManager.clearRows();
 
-        window.clear();
+        window.clear(sf::Color(0, 0, 28));
         renderer.drawGrid(gameManager.screenState);
         renderer.drawTetromino(ghostTetromino);
         renderer.drawTetromino(currentTetromino);
@@ -183,6 +183,12 @@ void Game::handleInputs()
         {
             window.close();
         }
+        if (event->is<sf::Event::Resized>())
+        {
+            currentWindowWidth = event->getIf<sf::Event::Resized>()->size.x;
+            currentWindowHeight = event->getIf<sf::Event::Resized>()->size.y;
+            applyView();
+        }
         else if (const auto *keyPressed{event->getIf<sf::Event::KeyPressed>()})
         {
             switch (keyPressed->scancode)
@@ -195,11 +201,13 @@ void Game::handleInputs()
                 isFullscreen = !isFullscreen;
                 if (isFullscreen)
                 {
+                    windowPos = window.getPosition();
                     window.create(fullscreenMode, static_cast<std::string>(WINDOW_TITLE), sf::State::Fullscreen);
                 }
                 else
                 {
-                    window.create(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
+                    window.create(sf::VideoMode({currentWindowWidth, currentWindowHeight}), static_cast<std::string>(WINDOW_TITLE), sf::State::Windowed);
+                    window.setPosition(windowPos);
                     window.setIcon(icon);
                 }
                 window.setFramerateLimit(FRAME_RATE);

@@ -13,6 +13,9 @@ public:
 
 private:
     sf::RenderWindow window;
+    uint16_t currentWindowWidth{DEFAULT_WINDOW_WIDTH};
+    uint16_t currentWindowHeight{DEFAULT_WINDOW_HEIGHT};
+    sf::Vector2i windowPos;
     sf::View fixedView;
     bool isFullscreen{false};
     const sf::VideoMode fullscreenMode = sf::VideoMode::getDesktopMode();
