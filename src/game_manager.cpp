@@ -71,7 +71,7 @@ bool GameManager::tryRotate(Tetromino &currentTetromino, const Tetromino &rotate
         const int8_t nextRotCW = (startRot + 1) % 4;
         const bool isCW = (endRot == nextRotCW);
         const auto &kickTable = isCW ? kickTableICW : kickTableICCW;
-        for (int i = 0; i < 5; i++)
+        for (size_t i = 0; i < kickTable[startRot].size(); i++)
         {
             const int8_t deltaX = kickTable[startRot][i].x;
             const int8_t deltaY = kickTable[startRot][i].y;
@@ -87,7 +87,7 @@ bool GameManager::tryRotate(Tetromino &currentTetromino, const Tetromino &rotate
     }
     else
     {
-        for (int i = 0; i < 5; i++)
+        for (size_t i = 0; i < offsetData[startRot].size(); i++)
         {
             const int8_t deltaX = offsetData[startRot][i].x - offsetData[endRot][i].x;
             const int8_t deltaY = offsetData[startRot][i].y - offsetData[endRot][i].y;

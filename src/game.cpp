@@ -54,27 +54,27 @@ void Game::loadAssets()
     {
         throw std::runtime_error("Failed to load icon.\n");
     }
-    if (!roboto.openFromFile("fonts/Roboto-VariableFont_wdth,wght.ttf"))
+    else if (!roboto.openFromFile("fonts/Roboto-VariableFont_wdth,wght.ttf"))
     {
         throw std::runtime_error("Failed to load font.\n");
     }
-    if (!themeMusic.openFromFile("audio/theme.mp3"))
+    else if (!themeMusic.openFromFile("audio/theme.mp3"))
     {
         throw std::runtime_error("Failed to load theme music.\n");
     }
-    if (!rotate.loadFromFile("audio/rotate.wav"))
+    else if (!rotate.loadFromFile("audio/rotate.wav"))
     {
         throw std::runtime_error("Failed to load rotate sound.\n");
     }
-    if (!hardDrop.loadFromFile("audio/hard-drop.wav"))
+    else if (!hardDrop.loadFromFile("audio/hard-drop.wav"))
     {
         throw std::runtime_error("Failed to load hard-drop sound.\n");
     }
-    if (!hold.loadFromFile("audio/hold.wav"))
+    else if (!hold.loadFromFile("audio/hold.wav"))
     {
         throw std::runtime_error("Failed to load hold sound.\n");
     }
-    if (!invalid.loadFromFile("audio/invalid.mp3"))
+    else if (!invalid.loadFromFile("audio/invalid.mp3"))
     {
         throw std::runtime_error("Failed to load invalid sound.\n");
     }
@@ -83,10 +83,10 @@ void Game::loadAssets()
     themeMusic.setLooping(true);
     themeMusic.setPlayingOffset(sf::seconds(1.0f));
     themeMusic.play();
-    rotateSound.setVolume(50.0f);
-    hardDropSound.setVolume(75.0f);
-    holdSound.setVolume(75.0f);
-    invalidSound.setVolume(50.0f);
+    rotateSound.setVolume(40.0f);
+    hardDropSound.setVolume(50.0f);
+    holdSound.setVolume(50.0f);
+    invalidSound.setVolume(25.0f);
 }
 
 void Game::run()
