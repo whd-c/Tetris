@@ -218,26 +218,26 @@ bool GameManager::holdTetromino(Tetromino &tetromino, std::vector<Tetromino> &ba
 
     if (!hasHeld)
     {
-        heldTetromino = tetromino;
         auto nextTetromino = newTetromino(*bag.begin());
         if (!nextTetromino)
         {
             canHold = false;
             return false;
         }
+        heldTetromino = tetromino;
         tetromino = *nextTetromino;
         bag.erase(bag.begin());
         hasHeld = true;
     }
     else
     {
-        Tetromino temp = heldTetromino;
-        auto nextTetromino = newTetromino(temp);
+        auto nextTetromino = newTetromino(heldTetromino);
         if (!nextTetromino)
         {
             canHold = false;
             return false;
         }
+        Tetromino temp = heldTetromino;
         heldTetromino = tetromino;
         tetromino = *nextTetromino;
     }
