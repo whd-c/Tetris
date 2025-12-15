@@ -36,7 +36,7 @@ Every 500 score points, a new level awaits.
 
 - **CMake**
 
-- **MinGW C++ compiler**.
+- **MinGW C++ compiler** OR **MSVC**
 
 - **Git**
 
@@ -49,19 +49,18 @@ This project has a CMakeLists.txt ready, so u can make a build folder and config
 ```
 mkdir build
 cd build
+cmake ..
 ```
 
 On Windows:
 
 ```
-cmake -G "MinGW Makefiles" ..
-cmake --build .
+cmake --build . --config Release
 ```
 
 On Linux:
 
 ```
-cmake ..
 make
 ```
 

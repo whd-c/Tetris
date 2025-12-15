@@ -2,11 +2,8 @@ cmake_minimum_required(VERSION 3.28)
 project(Tetris LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-if(NOT WIN32)
-    set(CMAKE_EXE_LINKER_FLAGS "")
-else()
-    set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++ -pthread")
-endif()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
 
 include(FetchContent)
 FetchContent_Declare(SFML
@@ -26,17 +23,25 @@ add_executable(${PROJECT_NAME}
     src/game.cpp
     icon/resource.rc
     )
+if(WIN32)
+    if(MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MTd")     
+        target_link_options(${PROJECT_NAME} PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
+    else()
+        target_link_options(${PROJECT_NAME} PRIVATE -mwindows)
+        target_compile_options(${PROJECT_NAME} PRIVATE
+        -Wall        
+        -Wextra
+        -Wpedantic
+        -Werror      
+    )
+    endif()
+endif()
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE SFML::Graphics SFML::Audio)
-target_compile_options(${PROJECT_NAME} PRIVATE
-    -Wall        
-    -Wextra
-    -Wpedantic
-    -Werror      
-)
 
 function(copy_resource_dir dir_name)
     set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/${dir_name}")
